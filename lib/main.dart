@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pay_evm/screenpage/WalletScreen.dart';
-
+import 'package:pay_evm/utils/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,11 +14,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Kanari Wallet',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.black12,
-        ),
-      ),
+      theme: AppTheme.lightTheme,
       home: const WalletScreen(),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/wallet_service.dart';
+import '../utils/app_theme.dart';
+import '../utils/custom_widgets.dart';
 
 class CreateWalletScreen extends StatefulWidget {
   const CreateWalletScreen({super.key});
@@ -9,27 +11,34 @@ class CreateWalletScreen extends StatefulWidget {
   State<CreateWalletScreen> createState() => _CreateWalletScreenState();
 }
 
-class _CreateWalletScreenState extends State<CreateWalletScreen> {
+class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProviderStateMixin {
   final WalletService _walletService = WalletService();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _mnemonicController = TextEditingController();
   final TextEditingController _privateKeyController = TextEditingController();
   
+  late TabController _tabController;
   bool _isLoading = false;
   int _selectedTab = 0; // 0: Create, 1: Import Mnemonic, 2: Import Private Key
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _mnemonicController.dispose();
     _privateKeyController.dispose();
+    _tabController.dispose();
     _walletService.dispose();
     super.dispose();
   }
 
   Future<void> _createNewWallet() async {
     if (_nameController.text.trim().isEmpty) {
-      //eng
       _showError('Please enter a wallet name');
       return;
     }
@@ -58,7 +67,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
     }
 
     if (_mnemonicController.text.trim().isEmpty) {
-      _showError('Please enter a Mnemonic phrase');
+      _showError('Please enter a mnemonic phrase');
       return;
     }
 
@@ -89,7 +98,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
     }
 
     if (_privateKeyController.text.trim().isEmpty) {
-      _showError('Please enter a Private Key');
+      _showError('Please enter a private key');
       return;
     }
 
@@ -112,6 +121,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
       setState(() => _isLoading = false);
     }
   }
+
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

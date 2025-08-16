@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import '../services/wallet_service.dart';
 import '../models/wallet_model.dart';
 import '../models/network_model.dart';
+import '../utils/app_theme.dart';
+import '../utils/custom_widgets.dart';
 import 'CreateWalletScreen.dart';
 import 'WalletListScreen.dart';
 import 'SendScreen.dart';
@@ -24,9 +26,9 @@ class WalletScreenState extends State<WalletScreen> {
   double _ethBalance = 0.0;
   bool _isLoading = true;
   
-  // Dummy data for other assets
+  // Demo data for other assets
   final List<Map<String, dynamic>> _otherAssets = [
-
+    // You can add more assets here
   ];
 
   @override
@@ -137,8 +139,14 @@ class WalletScreenState extends State<WalletScreen> {
     if (_currentWallet != null) {
       Clipboard.setData(ClipboardData(text: _currentWallet!.address));
       ScaffoldMessenger.of(context).showSnackBar(
-        //eng
-        const SnackBar(content: Text('Copied')),
+        SnackBar(
+          content: const Text('Address copied to clipboard'),
+          backgroundColor: AppTheme.secondaryColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+          ),
+        ),
       );
     }
   }
@@ -209,22 +217,22 @@ class WalletScreenState extends State<WalletScreen> {
         child: ClipOval(
           child: Image.network(
             network.iconUrl!,
-            width: 16,
-            height: 16,
+            width: 20,
+            height: 20,
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
               // Fallback to default icon if URL fails
               return Icon(
                 _getNetworkIcon(network),
                 color: Colors.white,
-                size: 16,
+                size: 20,
               );
             },
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
               return const SizedBox(
-                width: 16,
-                height: 16,
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(strokeWidth: 1, color: Colors.white),
               );
             },
@@ -243,7 +251,7 @@ class WalletScreenState extends State<WalletScreen> {
       child: Icon(
         _getNetworkIcon(network),
         color: Colors.white,
-        size: 16,
+        size: 20,
       ),
     );
   }
@@ -251,9 +259,11 @@ class WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
         title: const Text('Kanari Wallet'),
-        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: _currentNetwork != null
             ? IconButton(
                 icon: _buildNetworkIcon(_currentNetwork!),
@@ -263,17 +273,28 @@ class WalletScreenState extends State<WalletScreen> {
             : null,
         actions: [
           IconButton(
-            icon: const Icon(Icons.account_balance_wallet),
+            icon: Icon(
+              Icons.account_balance_wallet_outlined,
+              color: AppTheme.textPrimary,
+            ),
             onPressed: _currentWallet != null ? _openWalletList : _openCreateWallet,
+            tooltip: 'Wallets',
           ),
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: Icon(
+              Icons.add_circle_outline,
+              color: AppTheme.primaryColor,
+            ),
             onPressed: _openCreateWallet,
+            tooltip: 'Create Wallet',
           ),
+          const SizedBox(width: AppTheme.spacingS),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
           : _currentWallet == null
               ? _buildNoWalletState()
               : _buildWalletContent(),
@@ -281,130 +302,71 @@ class WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildNoWalletState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.account_balance_wallet_outlined,
-            size: 64,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'No wallets yet',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Start by creating a new wallet',
-            style: TextStyle(color: Colors.grey[500]),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _openCreateWallet,
-            icon: const Icon(Icons.add),
-            label: const Text('Create New Wallet'),
-          ),
-        ],
-      ),
+    return EmptyState(
+      title: 'Welcome to Kanari Wallet',
+      subtitle: 'Create your first wallet to get started with secure crypto transactions',
+      icon: Icons.account_balance_wallet_outlined,
+      buttonText: 'Create New Wallet',
+      onButtonPressed: _openCreateWallet,
     );
   }
 
   Widget _buildWalletContent() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildBalanceCard(),
-          const SizedBox(height: 24),
-          _buildActionButtons(),
-          const SizedBox(height: 24),
-          const Text('My Assets',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Expanded(child: _buildAssetList()),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBalanceCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
+    return RefreshIndicator(
+      onRefresh: _loadWallet,
+      color: AppTheme.primaryColor,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppTheme.spacingM),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Balance Card
+            BalanceCard(
+              totalBalance: _totalBalance.toStringAsFixed(2),
+              walletName: _currentWallet?.name,
+              walletAddress: _currentWallet?.address,
+              networkName: _currentNetwork?.name,
+              networkIcon: _currentNetwork != null ? _getNetworkIcon(_currentNetwork!) : null,
+              networkColor: _currentNetwork != null ? _getNetworkColor(_currentNetwork!) : null,
+              onCopyAddress: _copyAddress,
+              onNetworkTap: _openNetworkSelection,
+            ),
+            
+            const SizedBox(height: AppTheme.spacingL),
+            
+            // Action Buttons
+            _buildActionButtons(),
+            
+            const SizedBox(height: AppTheme.spacingXL),
+            
+            // Assets Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Total Balance', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                Row(
-                  children: [
-                    if (_currentNetwork != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _getNetworkColor(_currentNetwork!).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _getNetworkColor(_currentNetwork!),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _getNetworkIcon(_currentNetwork!),
-                              size: 12,
-                              color: _getNetworkColor(_currentNetwork!),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _currentNetwork!.name,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: _getNetworkColor(_currentNetwork!),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      _currentWallet?.name ?? '',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                Text(
+                  'My Assets',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    // TODO: Add token functionality
+                  },
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Add Token'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text('\$${_totalBalance.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 16),
-            // Wallet address display
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _currentWallet != null 
-                      ? '${_currentWallet!.address.substring(0, 6)}...${_currentWallet!.address.substring(_currentWallet!.address.length - 4)}'
-                      : '0x0000...0000',
-                  style: const TextStyle(fontFamily: 'monospace'),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 16),
-                  onPressed: _copyAddress,
-                ),
-              ],
-            )
+            
+            const SizedBox(height: AppTheme.spacingM),
+            
+            // Asset List
+            _buildAssetList(),
           ],
         ),
       ),
@@ -414,23 +376,23 @@ class WalletScreenState extends State<WalletScreen> {
   Widget _buildActionButtons() {
     return Row(
       children: [
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _currentWallet != null ? () => _openSendScreen() : null,
-            icon: const Icon(Icons.arrow_upward),
-            label: const Text('Send'),
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-          ),
+        ActionButton(
+          label: 'Send',
+          icon: Icons.arrow_upward_rounded,
+          onPressed: _currentWallet != null ? _openSendScreen : null,
+          backgroundColor: Colors.white,
+          iconColor: AppTheme.primaryColor,
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton.icon(
-            onPressed: _currentWallet != null ? () => _openReceiveScreen() : null,
-            icon: const Icon(Icons.arrow_downward),
-            label: const Text('Receive'),
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
-          ),
+        const SizedBox(width: AppTheme.spacingM),
+        ActionButton(
+          label: 'Receive',
+          icon: Icons.arrow_downward_rounded,
+          onPressed: _currentWallet != null ? _openReceiveScreen : null,
+          backgroundColor: Colors.white,
+          iconColor: AppTheme.secondaryColor,
         ),
+
+
       ],
     );
   }
@@ -465,25 +427,32 @@ class WalletScreenState extends State<WalletScreen> {
         'symbol': _currentNetwork?.currencySymbol ?? 'ETH',
         'amount': _ethBalance,
         'usd_value': _ethBalance * _getNativeTokenPrice(),
-        'icon': Icons.currency_bitcoin
+        'icon': _currentNetwork != null ? _getNetworkIcon(_currentNetwork!) : Icons.currency_bitcoin
       },
       ..._otherAssets,
     ];
 
-    return ListView.builder(
-      itemCount: allAssets.length,
-      itemBuilder: (context, index) {
-        final asset = allAssets[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 4.0),
-          child: ListTile(
-            leading: CircleAvatar(child: Icon(asset['icon'])),
-            title: Text(asset['name']),
-            subtitle: Text('${(asset['amount'] as double).toStringAsFixed(4)} ${asset['symbol']}'),
-            trailing: Text('\$${(asset['usd_value'] as double).toStringAsFixed(2)}'),
-          ),
+    if (allAssets.isEmpty) {
+      return const EmptyState(
+        title: 'No Assets Yet',
+        subtitle: 'Your tokens will appear here once you receive them',
+        icon: Icons.account_balance_wallet_outlined,
+      );
+    }
+
+    return Column(
+      children: allAssets.map((asset) {
+        return AssetListItem(
+          name: asset['name'],
+          symbol: asset['symbol'],
+          amount: asset['amount'] as double,
+          usdValue: asset['usd_value'] as double,
+          icon: asset['icon'] as IconData?,
+          onTap: () {
+            // TODO: Show asset details
+          },
         );
-      },
+      }).toList(),
     );
   }
 }
