@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../services/wallet_service.dart';
 import '../models/wallet_model.dart';
+import '../models/network_model.dart';
 
 class SendScreen extends StatefulWidget {
   final WalletModel wallet;
@@ -21,12 +22,23 @@ class _SendScreenState extends State<SendScreen> {
   bool _isLoading = false;
   double _ethBalance = 0.0;
   bool _showScanner = false;
+  NetworkModel? _currentNetwork;
 
   @override
   void initState() {
     super.initState();
     _loadBalance();
+    _loadNetwork();
     _gasPriceController.text = '20'; // Default gas price in Gwei
+  }
+
+  Future<void> _loadNetwork() async {
+    try {
+      final network = await _walletService.getCurrentNetwork();
+      setState(() => _currentNetwork = network);
+    } catch (e) {
+      print('Error loading network: $e');
+    }
   }
 
   @override
@@ -170,7 +182,7 @@ class _SendScreenState extends State<SendScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Balance: ${_ethBalance.toStringAsFixed(6)} ETH',
+                      'Balance: ${_ethBalance.toStringAsFixed(6)} ${_currentNetwork?.currencySymbol ?? 'ETH'}',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[700],
@@ -194,7 +206,7 @@ class _SendScreenState extends State<SendScreen> {
                   icon: const Icon(Icons.qr_code_scanner),
                   onPressed: _scanQRCode,
                 ),
-                helperText: 'Ethereum Address (0x...)',
+                helperText: '${_currentNetwork?.name ?? 'Ethereum'} Address (0x...)',
               ),
             ),
             
@@ -204,7 +216,7 @@ class _SendScreenState extends State<SendScreen> {
             TextField(
               controller: _amountController,
               decoration: InputDecoration(
-                labelText: 'Amount (ETH)',
+                labelText: 'Amount',
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.monetization_on),
                 suffixIcon: TextButton(

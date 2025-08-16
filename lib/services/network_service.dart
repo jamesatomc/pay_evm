@@ -13,7 +13,7 @@ class NetworkService {
     const NetworkModel(
       id: 'ethereum',
       name: 'Ethereum',
-      rpcUrl: 'https://mainnet.infura.io/v3/YOUR_PROJECT_ID',
+      rpcUrl: 'https://eth.llamarpc.com',
       chainId: 1,
       currencySymbol: 'ETH',
       blockExplorerUrl: 'https://etherscan.io',
@@ -25,7 +25,7 @@ class NetworkService {
     const NetworkModel(
       id: 'sepolia',
       name: 'Sepolia Testnet',
-      rpcUrl: 'https://sepolia.infura.io/v3/YOUR_PROJECT_ID',
+      rpcUrl: 'https://rpc.sepolia.org',
       chainId: 11155111,
       currencySymbol: 'ETH',
       blockExplorerUrl: 'https://sepolia.etherscan.io',
@@ -57,77 +57,19 @@ class NetworkService {
       iconPath: 'assets/icons/bnb.png',
     ),
 
-    // Polygon
+    // Alpen Testnet
     const NetworkModel(
-      id: 'polygon',
-      name: 'Polygon',
-      rpcUrl: 'https://polygon-rpc.com',
-      chainId: 137,
-      currencySymbol: 'MATIC',
-      blockExplorerUrl: 'https://polygonscan.com',
-      isTestnet: false,
-      iconPath: 'assets/icons/polygon.png',
-    ),
-
-    // Mumbai Testnet
-    const NetworkModel(
-      id: 'mumbai',
-      name: 'Mumbai Testnet',
-      rpcUrl: 'https://rpc-mumbai.maticvigil.com',
-      chainId: 80001,
-      currencySymbol: 'MATIC',
-      blockExplorerUrl: 'https://mumbai.polygonscan.com',
+      id: 'alpen-testnet',
+      name: 'Alpen Testnet',
+      rpcUrl: 'https://rpc.testnet.alpenlabs.io',
+      chainId: 2892,
+      currencySymbol: 'sBTC',
+      blockExplorerUrl: 'https://explorer.testnet.alpenlabs.io',
       isTestnet: true,
-      iconPath: 'assets/icons/polygon.png',
+      iconPath: 'assets/icons/alpen.png',
+      iconUrl: 'https://avatars.githubusercontent.com/u/113091135',
     ),
 
-    // Avalanche
-    const NetworkModel(
-      id: 'avalanche',
-      name: 'Avalanche C-Chain',
-      rpcUrl: 'https://api.avax.network/ext/bc/C/rpc',
-      chainId: 43114,
-      currencySymbol: 'AVAX',
-      blockExplorerUrl: 'https://snowtrace.io',
-      isTestnet: false,
-      iconPath: 'assets/icons/avalanche.png',
-    ),
-
-    // Avalanche Fuji Testnet
-    const NetworkModel(
-      id: 'fuji',
-      name: 'Avalanche Fuji Testnet',
-      rpcUrl: 'https://api.avax-test.network/ext/bc/C/rpc',
-      chainId: 43113,
-      currencySymbol: 'AVAX',
-      blockExplorerUrl: 'https://testnet.snowtrace.io',
-      isTestnet: true,
-      iconPath: 'assets/icons/avalanche.png',
-    ),
-
-    // Fantom
-    const NetworkModel(
-      id: 'fantom',
-      name: 'Fantom Opera',
-      rpcUrl: 'https://rpc.ftm.tools',
-      chainId: 250,
-      currencySymbol: 'FTM',
-      blockExplorerUrl: 'https://ftmscan.com',
-      isTestnet: false,
-      iconPath: 'assets/icons/fantom.png',
-    ),
-
-    // Fantom Testnet
-    const NetworkModel(
-      id: 'fantom-testnet',
-      name: 'Fantom Testnet',
-      rpcUrl: 'https://rpc.testnet.fantom.network',
-      chainId: 4002,
-      currencySymbol: 'FTM',
-      blockExplorerUrl: 'https://testnet.ftmscan.com',
-      isTestnet: true,
-      iconPath: 'assets/icons/fantom.png',
-    ),
   ];
 
   // Get all available networks (predefined + custom)

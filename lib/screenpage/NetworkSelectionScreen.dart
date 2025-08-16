@@ -142,14 +142,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       elevation: isActive ? 4 : 1,
       color: isActive ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getNetworkColor(network),
-          child: Icon(
-            _getNetworkIcon(network),
-            color: Colors.white,
-            size: 20,
-          ),
-        ),
+        leading: _buildNetworkAvatar(network),
         title: Text(
           network.name,
           style: TextStyle(
@@ -230,6 +223,49 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
     );
   }
 
+  Widget _buildNetworkAvatar(NetworkModel network) {
+    // If network has a custom icon URL, use it
+    if (network.iconUrl != null && network.iconUrl!.isNotEmpty) {
+      return CircleAvatar(
+        backgroundColor: _getNetworkColor(network),
+        child: ClipOval(
+          child: Image.network(
+            network.iconUrl!,
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to default icon if URL fails
+              return Icon(
+                _getNetworkIcon(network),
+                color: Colors.white,
+                size: 20,
+              );
+            },
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              );
+            },
+          ),
+        ),
+      );
+    }
+    
+    // Default icon
+    return CircleAvatar(
+      backgroundColor: _getNetworkColor(network),
+      child: Icon(
+        _getNetworkIcon(network),
+        color: Colors.white,
+        size: 20,
+      ),
+    );
+  }
+
   Color _getNetworkColor(NetworkModel network) {
     if (network.isCustom) return Colors.blue;
     if (network.isTestnet) return Colors.orange;
@@ -250,6 +286,8 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       case 'fantom':
       case 'fantom-testnet':
         return const Color(0xFF1969FF);
+      case 'alpen-testnet':
+        return const Color(0xFFF7931A); // Bitcoin orange
       default:
         return Colors.grey;
     }
@@ -275,6 +313,8 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       case 'fantom':
       case 'fantom-testnet':
         return Icons.speed;
+      case 'alpen-testnet':
+        return Icons.currency_bitcoin; // Bitcoin icon for sBTC
       default:
         return Icons.link;
     }

@@ -8,6 +8,7 @@ class NetworkModel {
   final bool isTestnet;
   final bool isCustom;
   final String iconPath;
+  final String? iconUrl; // URL for custom icon
 
   const NetworkModel({
     required this.id,
@@ -19,6 +20,7 @@ class NetworkModel {
     this.isTestnet = false,
     this.isCustom = false,
     required this.iconPath,
+    this.iconUrl,
   });
 
   Map<String, dynamic> toJson() {
@@ -32,6 +34,7 @@ class NetworkModel {
       'isTestnet': isTestnet,
       'isCustom': isCustom,
       'iconPath': iconPath,
+      'iconUrl': iconUrl,
     };
   }
 
@@ -46,6 +49,7 @@ class NetworkModel {
       isTestnet: json['isTestnet'] ?? false,
       isCustom: json['isCustom'] ?? false,
       iconPath: json['iconPath'],
+      iconUrl: json['iconUrl'],
     );
   }
 
@@ -59,6 +63,7 @@ class NetworkModel {
     bool? isTestnet,
     bool? isCustom,
     String? iconPath,
+    String? iconUrl,
   }) {
     return NetworkModel(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class NetworkModel {
       isTestnet: isTestnet ?? this.isTestnet,
       isCustom: isCustom ?? this.isCustom,
       iconPath: iconPath ?? this.iconPath,
+      iconUrl: iconUrl ?? this.iconUrl,
     );
   }
 

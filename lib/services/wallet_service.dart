@@ -10,6 +10,25 @@ import '../models/wallet_model.dart';
 import '../models/network_model.dart';
 import 'network_service.dart';
 
+// Custom HTTP client that adds proper headers for JSON-RPC
+class JsonRpcClient extends BaseClient {
+  final Client _inner = Client();
+
+  @override
+  Future<StreamedResponse> send(BaseRequest request) async {
+    // Add proper headers for JSON-RPC requests
+    request.headers['Content-Type'] = 'application/json';
+    request.headers['Accept'] = 'application/json';
+    
+    return _inner.send(request);
+  }
+
+  @override
+  void close() {
+    _inner.close();
+  }
+}
+
 class WalletService {
   static const String _walletKey = 'wallet_data';
   static const String _activeWalletKey = 'active_wallet';
@@ -19,19 +38,70 @@ class WalletService {
   Web3Client? _web3client;
   NetworkModel? _currentNetwork;
 
-  WalletService() {
-    _initializeNetwork();
-  }
+  WalletService();
 
   Future<void> _initializeNetwork() async {
-    _currentNetwork = await _networkService.getActiveNetwork();
-    _web3client = Web3Client(_currentNetwork!.rpcUrl, Client());
+    try {
+      _currentNetwork = await _networkService.getActiveNetwork();
+      _web3client?.dispose(); // Dispose old client if exists
+      
+      // Create HTTP client with proper headers for JSON-RPC
+      final httpClient = JsonRpcClient();
+      _web3client = Web3Client(
+        _currentNetwork!.rpcUrl, 
+        httpClient,
+        socketConnector: () => throw UnimplementedError('WebSocket not supported'),
+      );
+      
+      print('Network initialized: ${_currentNetwork!.name} (${_currentNetwork!.rpcUrl})');
+      
+      // Test connection
+      await _testConnection();
+    } catch (e) {
+      print('Error initializing network: $e');
+    }
+  }
+
+  Future<void> _testConnection() async {
+    try {
+      print('Testing connection to ${_currentNetwork!.name}...');
+      print('RPC URL: ${_currentNetwork!.rpcUrl}');
+      
+      // Try to get chain ID to test connection
+      final chainId = await _web3client!.getChainId().timeout(const Duration(seconds: 10));
+      print('Connection test successful - Chain ID: $chainId');
+      
+      // Verify chain ID matches expected
+      if (chainId != _currentNetwork!.chainId) {
+        print('WARNING: Chain ID mismatch! Expected: ${_currentNetwork!.chainId}, Got: $chainId');
+      }
+    } catch (e) {
+      print('Connection test failed: $e');
+      print('Error type: ${e.runtimeType}');
+      if (e.toString().contains('content-type')) {
+        print('This appears to be a content-type header issue');
+      }
+    }
   }
 
   Future<void> switchNetwork(String networkId) async {
-    await _networkService.setActiveNetwork(networkId);
-    _currentNetwork = await _networkService.getActiveNetwork();
-    _web3client = Web3Client(_currentNetwork!.rpcUrl, Client());
+    try {
+      await _networkService.setActiveNetwork(networkId);
+      _currentNetwork = await _networkService.getActiveNetwork();
+      _web3client?.dispose(); // Dispose old client
+      
+      // Create new client with proper headers
+      final httpClient = JsonRpcClient();
+      _web3client = Web3Client(
+        _currentNetwork!.rpcUrl, 
+        httpClient,
+        socketConnector: () => throw UnimplementedError('WebSocket not supported'),
+      );
+      
+      print('Switched to network: ${_currentNetwork!.name}');
+    } catch (e) {
+      print('Error switching network: $e');
+    }
   }
 
   Future<NetworkModel> getCurrentNetwork() async {
@@ -39,6 +109,12 @@ class WalletService {
       await _initializeNetwork();
     }
     return _currentNetwork!;
+  }
+
+  Future<void> _ensureInitialized() async {
+    if (_web3client == null || _currentNetwork == null) {
+      await _initializeNetwork();
+    }
   }
 
   // Generate new wallet with mnemonic
@@ -212,12 +288,35 @@ class WalletService {
   // Get ETH balance
   Future<double> getEthBalance(String address) async {
     try {
-      if (_web3client == null) await _initializeNetwork();
+      await _ensureInitialized();
+      print('=== Getting balance ===');
+      print('Address: $address');
+      print('Network: ${_currentNetwork!.name}');
+      print('Chain ID: ${_currentNetwork!.chainId}');
+      print('Currency: ${_currentNetwork!.currencySymbol}');
+      print('RPC URL: ${_currentNetwork!.rpcUrl}');
+      
       final ethAddress = EthereumAddress.fromHex(address);
-      final balance = await _web3client!.getBalance(ethAddress);
-      return balance.getValueInUnit(EtherUnit.ether);
+      
+      // Add timeout to balance request
+      final balance = await _web3client!.getBalance(ethAddress)
+          .timeout(const Duration(seconds: 15));
+      
+      final balanceInEther = balance.getValueInUnit(EtherUnit.ether);
+      final balanceInWei = balance.getInWei;
+      
+      print('Balance in Wei: $balanceInWei');
+      print('Balance in Ether: $balanceInEther ${_currentNetwork!.currencySymbol}');
+      print('=== Balance request completed ===');
+      
+      return balanceInEther;
     } catch (e) {
-      print('Error getting ETH balance: $e');
+      print('=== Balance request failed ===');
+      print('Error: $e');
+      print('Network: ${_currentNetwork?.name}');
+      print('RPC: ${_currentNetwork?.rpcUrl}');
+      print('Address: $address');
+      print('=== End error details ===');
       return 0.0;
     }
   }
@@ -270,7 +369,7 @@ class WalletService {
         value: etherAmount,
       );
       
-      if (_web3client == null) await _initializeNetwork();
+      await _ensureInitialized();
       final txHash = await _web3client!.sendTransaction(
         credentials,
         transaction,

@@ -49,13 +49,16 @@ class WalletScreenState extends State<WalletScreen> {
       final network = await _walletService.getCurrentNetwork();
       
       if (wallet != null) {
+        print('Loading balance for wallet: ${wallet.address} on network: ${network.name}');
         final balance = await _walletService.getEthBalance(wallet.address);
+        print('Balance loaded: $balance ${network.currencySymbol}');
         setState(() {
           _currentWallet = wallet;
           _currentNetwork = network;
           _ethBalance = balance;
         });
       } else {
+        print('No wallet found, setting network: ${network.name}');
         setState(() {
           _currentNetwork = network;
         });
@@ -67,11 +70,34 @@ class WalletScreenState extends State<WalletScreen> {
     }
   }
 
-  // Calculate total balance including ETH
+  // Calculate total balance including native token
   double get _totalBalance {
-    double total = _ethBalance * 1800; // Assume ETH price $1800 for demo
+    // Use current network's currency price (demo prices)
+    double nativeTokenPrice = _getNativeTokenPrice();
+    double total = _ethBalance * nativeTokenPrice;
     total += _otherAssets.fold(0.0, (sum, item) => sum + (item['usd_value'] as double));
     return total;
+  }
+
+  double _getNativeTokenPrice() {
+    if (_currentNetwork == null) return 1800.0; // Default ETH price
+    
+    switch (_currentNetwork!.currencySymbol) {
+      case 'ETH':
+        return 1800.0;
+      case 'BNB':
+        return 220.0;
+      case 'MATIC':
+        return 0.8;
+      case 'AVAX':
+        return 25.0;
+      case 'FTM':
+        return 0.25;
+      case 'sBTC':
+        return 30000.0; // Signet BTC price similar to BTC
+      default:
+        return 1.0; // Default for unknown tokens
+    }
   }
 
   Future<void> _openNetworkSelection() async {
@@ -137,6 +163,8 @@ class WalletScreenState extends State<WalletScreen> {
       case 'fantom':
       case 'fantom-testnet':
         return const Color(0xFF1969FF);
+      case 'alpen-testnet':
+        return const Color(0xFFF7931A); // Bitcoin orange
       default:
         return Colors.grey;
     }
@@ -162,9 +190,62 @@ class WalletScreenState extends State<WalletScreen> {
       case 'fantom':
       case 'fantom-testnet':
         return Icons.speed;
+      case 'alpen-testnet':
+        return Icons.currency_bitcoin; // Bitcoin icon for sBTC
       default:
         return Icons.link;
     }
+  }
+
+  Widget _buildNetworkIcon(NetworkModel network) {
+    // If network has a custom icon URL, use it
+    if (network.iconUrl != null && network.iconUrl!.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: _getNetworkColor(network),
+          shape: BoxShape.circle,
+        ),
+        child: ClipOval(
+          child: Image.network(
+            network.iconUrl!,
+            width: 16,
+            height: 16,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              // Fallback to default icon if URL fails
+              return Icon(
+                _getNetworkIcon(network),
+                color: Colors.white,
+                size: 16,
+              );
+            },
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 1, color: Colors.white),
+              );
+            },
+          ),
+        ),
+      );
+    }
+    
+    // Default icon
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _getNetworkColor(network),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        _getNetworkIcon(network),
+        color: Colors.white,
+        size: 16,
+      ),
+    );
   }
 
   @override
@@ -175,18 +256,7 @@ class WalletScreenState extends State<WalletScreen> {
         centerTitle: true,
         leading: _currentNetwork != null
             ? IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: _getNetworkColor(_currentNetwork!),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _getNetworkIcon(_currentNetwork!),
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
+                icon: _buildNetworkIcon(_currentNetwork!),
                 onPressed: _openNetworkSelection,
                 tooltip: _currentNetwork!.name,
               )
@@ -388,13 +458,13 @@ class WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildAssetList() {
-    // Combine ETH with other assets
+    // Combine native token with other assets
     final allAssets = [
       {
         'name': _currentNetwork?.name ?? 'Ethereum',
         'symbol': _currentNetwork?.currencySymbol ?? 'ETH',
         'amount': _ethBalance,
-        'usd_value': _ethBalance * 1800, // Demo price
+        'usd_value': _ethBalance * _getNativeTokenPrice(),
         'icon': Icons.currency_bitcoin
       },
       ..._otherAssets,

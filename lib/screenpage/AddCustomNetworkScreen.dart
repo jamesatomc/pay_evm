@@ -21,6 +21,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
   late final TextEditingController _chainIdController;
   late final TextEditingController _currencySymbolController;
   late final TextEditingController _blockExplorerController;
+  late final TextEditingController _iconUrlController;
   
   bool _isTestnet = false;
   bool _isLoading = false;
@@ -39,6 +40,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
     _chainIdController = TextEditingController(text: network?.chainId.toString() ?? '');
     _currencySymbolController = TextEditingController(text: network?.currencySymbol ?? '');
     _blockExplorerController = TextEditingController(text: network?.blockExplorerUrl ?? '');
+    _iconUrlController = TextEditingController(text: network?.iconUrl ?? '');
     _isTestnet = network?.isTestnet ?? false;
   }
 
@@ -49,6 +51,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
     _chainIdController.dispose();
     _currencySymbolController.dispose();
     _blockExplorerController.dispose();
+    _iconUrlController.dispose();
     super.dispose();
   }
 
@@ -112,6 +115,9 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
         isTestnet: _isTestnet,
         isCustom: true,
         iconPath: 'assets/icons/custom.png',
+        iconUrl: _iconUrlController.text.trim().isEmpty 
+            ? null 
+            : _iconUrlController.text.trim(),
       );
 
       bool success;
@@ -188,6 +194,26 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
     final chainId = int.tryParse(value.trim());
     if (chainId == null || chainId < 1) {
       return 'กรุณาใส่ Chain ID ที่ถูกต้อง';
+    }
+    
+    return null;
+  }
+
+  String? _validateIconUrl(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null; // Optional field
+    }
+    
+    final uri = Uri.tryParse(value.trim());
+    if (uri == null || !uri.scheme.startsWith('http')) {
+      return 'กรุณาใส่ URL ของรูป icon ที่ถูกต้อง';
+    }
+    
+    // Check if URL might be an image
+    final path = uri.path.toLowerCase();
+    if (!path.endsWith('.png') && !path.endsWith('.jpg') && !path.endsWith('.jpeg') && 
+        !path.endsWith('.gif') && !path.endsWith('.svg') && !path.endsWith('.webp')) {
+      return 'URL ควรเป็นไฟล์รูปภาพ (.png, .jpg, .svg ฯลฯ)';
     }
     
     return null;
@@ -346,6 +372,51 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   
                   const SizedBox(height: 16),
                   
+                  // Icon URL (Optional)
+                  TextFormField(
+                    controller: _iconUrlController,
+                    decoration: InputDecoration(
+                      labelText: 'Icon URL (ไม่บังคับ)',
+                      hintText: 'https://example.com/icon.png',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.image),
+                      suffixIcon: _iconUrlController.text.trim().isNotEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: CircleAvatar(
+                                radius: 12,
+                                backgroundColor: Colors.transparent,
+                                child: ClipOval(
+                                  child: Image.network(
+                                    _iconUrlController.text.trim(),
+                                    width: 24,
+                                    height: 24,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(Icons.error, size: 20, color: Colors.red);
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            )
+                          : null,
+                    ),
+                    validator: _validateIconUrl,
+                    onChanged: (_) {
+                      setState(() {}); // Rebuild to show/hide preview
+                    },
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
                   // Testnet Switch
                   Card(
                     child: SwitchListTile(
@@ -401,6 +472,10 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                           Text('• Chain ID: รหัสประจำเครือข่าย'),
                           Text('• สัญลักษณ์เงินตรา: สัญลักษณ์ของเหรียญหลัก'),
                           Text('• Block Explorer: URL สำหรับดูข้อมูลธุรกรรม (ไม่บังคับ)'),
+                          Text('• Icon URL: ลิงค์รูป icon ของเครือข่าย (ไม่บังคับ)'),
+                          SizedBox(height: 4),
+                          Text('  รองรับไฟล์: .png, .jpg, .svg, .webp', 
+                               style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
                         ],
                       ),
                     ),
