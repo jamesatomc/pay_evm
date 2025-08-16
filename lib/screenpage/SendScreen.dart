@@ -85,12 +85,14 @@ class _SendScreenState extends State<SendScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final gasPrice = double.tryParse(_gasPriceController.text.trim());
+      final gasPriceGwei = double.tryParse(_gasPriceController.text.trim());
+      print('Gas price from UI: $gasPriceGwei Gwei');
+      
       final txHash = await _walletService.sendEth(
         fromAddress: widget.wallet.address,
         toAddress: _addressController.text.trim(),
         amount: amount,
-        gasPrice: gasPrice != null ? gasPrice * 1e9 : null, // Convert Gwei to Wei
+        gasPrice: gasPriceGwei, // Send Gwei value directly
       );
 
       if (mounted) {

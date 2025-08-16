@@ -351,33 +351,75 @@ class WalletService {
     required String fromAddress,
     required String toAddress,
     required double amount,
-    double? gasPrice,
+    double? gasPrice, // Gas price in Gwei
   }) async {
     try {
+      print('Starting transaction...');
+      print('=== Sending transaction ===');
+      print('From: $fromAddress');
+      print('To: $toAddress');
+      print('Amount: $amount ${_currentNetwork?.currencySymbol ?? 'ETH'}');
+      print('Network: ${_currentNetwork?.name}');
+      print('Chain ID: ${_currentNetwork?.chainId}');
+      
+      // Get private key
       final privateKey = await _secureStorage.read(key: 'pk_$fromAddress');
       if (privateKey == null) throw Exception('Private key not found');
       
       final credentials = EthPrivateKey.fromHex(privateKey);
       final to = EthereumAddress.fromHex(toAddress);
       
-      final etherAmount = EtherAmount.fromUnitAndValue(EtherUnit.ether, amount);
+      // Ensure web3 client is initialized
+      await _ensureInitialized();
+      
+      // Get current gas price if not provided
+      EtherAmount? gasPriceAmount;
+      if (gasPrice != null) {
+        // Convert Gwei to Wei using string conversion to avoid precision issues
+        final gasPriceWeiString = (gasPrice * 1000000000).toStringAsFixed(0);
+        final gasPriceWei = BigInt.parse(gasPriceWeiString);
+        gasPriceAmount = EtherAmount.inWei(gasPriceWei);
+        print('Gas price: $gasPrice Gwei');
+      } else {
+        try {
+          gasPriceAmount = await _web3client!.getGasPrice();
+          print('Using network gas price: ${gasPriceAmount.getInWei}');
+        } catch (e) {
+          print('Could not fetch gas price, using default');
+          gasPriceAmount = EtherAmount.inWei(BigInt.from(20000000000)); // 20 Gwei
+        }
+      }
+      
+      // Create transaction with explicit values - use string conversion for precision
+      final amountString = amount.toStringAsFixed(18); // Ensure precision to 18 decimal places
+      final amountInWei = BigInt.parse((double.parse(amountString) * 1e18).toStringAsFixed(0));
+      print('Amount: $amount ETH = $amountInWei Wei');
       
       final transaction = Transaction(
         to: to,
-        gasPrice: gasPrice != null ? EtherAmount.inWei(BigInt.from(gasPrice)) : null,
+        value: EtherAmount.inWei(amountInWei),
+        gasPrice: gasPriceAmount,
         maxGas: 21000,
-        value: etherAmount,
       );
       
-      await _ensureInitialized();
+      print('Sending transaction with gas price: ${gasPriceAmount.getInWei} Wei');
+      
       final txHash = await _web3client!.sendTransaction(
         credentials,
         transaction,
-        chainId: _currentNetwork!.chainId,
+        chainId: _currentNetwork?.chainId,
       );
       
+      print('=== Transaction successful ===');
+      print('TX Hash: $txHash');
       return txHash;
+      
     } catch (e) {
+      print('=== Transaction failed ===');
+      print('Error: $e');
+      print('Error type: ${e.runtimeType}');
+      print('Stack trace: ${StackTrace.current}');
+      print('=== End transaction error ===');
       throw Exception('Failed to send transaction: $e');
     }
   }
