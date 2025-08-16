@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../services/wallet_service.dart';
+import '../services/token_service.dart';
 import '../models/wallet_model.dart';
 import '../models/network_model.dart';
+import '../models/token_model.dart';
 
 class SendScreen extends StatefulWidget {
   final WalletModel wallet;
@@ -15,20 +17,25 @@ class SendScreen extends StatefulWidget {
 
 class _SendScreenState extends State<SendScreen> {
   final WalletService _walletService = WalletService();
+  final TokenService _tokenService = TokenService();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _gasPriceController = TextEditingController();
   
   bool _isLoading = false;
-  double _ethBalance = 0.0;
   bool _showScanner = false;
   NetworkModel? _currentNetwork;
+  
+  // Token selection
+  List<CustomTokenModel> _availableTokens = [];
+  CustomTokenModel? _selectedToken;
+  double _selectedTokenBalance = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _loadBalance();
     _loadNetwork();
+    _loadTokens();
     _gasPriceController.text = '20'; // Default gas price in Gwei
   }
 
@@ -41,6 +48,51 @@ class _SendScreenState extends State<SendScreen> {
     }
   }
 
+  Future<void> _loadTokens() async {
+    try {
+      final network = await _walletService.getCurrentNetwork();
+      if (network != null) {
+        final tokens = await _tokenService.getTokenBalances(widget.wallet, network.id);
+        setState(() {
+          _availableTokens = tokens;
+          // Set native token as default
+          _selectedToken = tokens.firstWhere(
+            (token) => token.isNative,
+            orElse: () => tokens.isNotEmpty ? tokens.first : CustomTokenModel.native(
+              name: 'Ethereum',
+              symbol: 'ETH',
+              networkId: network.id,
+            ),
+          );
+          _updateSelectedTokenBalance();
+        });
+      }
+    } catch (e) {
+      print('Error loading tokens: $e');
+    }
+  }
+
+  Future<void> _updateSelectedTokenBalance() async {
+    if (_selectedToken == null) return;
+    
+    try {
+      if (_selectedToken!.isNative) {
+        final balance = await _walletService.getEthBalance(widget.wallet.address);
+        setState(() => _selectedTokenBalance = balance);
+      } else {
+        final balance = await _tokenService.getTokenBalance(
+          _selectedToken!.contractAddress,
+          widget.wallet.address,
+          _currentNetwork?.id ?? '',
+        );
+        setState(() => _selectedTokenBalance = balance);
+      }
+    } catch (e) {
+      print('Error updating token balance: $e');
+      setState(() => _selectedTokenBalance = 0.0);
+    }
+  }
+
   @override
   void dispose() {
     _addressController.dispose();
@@ -50,18 +102,13 @@ class _SendScreenState extends State<SendScreen> {
     super.dispose();
   }
 
-  Future<void> _loadBalance() async {
-    try {
-      final balance = await _walletService.getEthBalance(widget.wallet.address);
-      setState(() => _ethBalance = balance);
-    } catch (e) {
-      print('Error loading balance: $e');
-    }
-  }
-
   Future<void> _sendTransaction() async {
+    if (_selectedToken == null) {
+      _showError('Please select a token');
+      return;
+    }
+
     if (_addressController.text.trim().isEmpty) {
-      //eng
       _showError('Please enter a destination address');
       return;
     }
@@ -77,7 +124,7 @@ class _SendScreenState extends State<SendScreen> {
       return;
     }
 
-    if (amount > _ethBalance) {
+    if (amount > _selectedTokenBalance) {
       _showError('Insufficient balance');
       return;
     }
@@ -88,12 +135,22 @@ class _SendScreenState extends State<SendScreen> {
       final gasPriceGwei = double.tryParse(_gasPriceController.text.trim());
       print('Gas price from UI: $gasPriceGwei Gwei');
       
-      final txHash = await _walletService.sendEth(
-        fromAddress: widget.wallet.address,
-        toAddress: _addressController.text.trim(),
-        amount: amount,
-        gasPrice: gasPriceGwei, // Send Gwei value directly
-      );
+      String txHash;
+      
+      if (_selectedToken!.isNative) {
+        // Send native token (ETH, BNB, etc.)
+        txHash = await _walletService.sendEth(
+          fromAddress: widget.wallet.address,
+          toAddress: _addressController.text.trim(),
+          amount: amount,
+          gasPrice: gasPriceGwei,
+        );
+      } else {
+        // Send ERC-20 token
+        // TODO: Implement ERC-20 token transfer
+        // For now, show a placeholder message
+        throw Exception('ERC-20 token transfers will be implemented in the next update');
+      }
 
       if (mounted) {
         Navigator.pop(context);
@@ -126,8 +183,15 @@ class _SendScreenState extends State<SendScreen> {
   }
 
   void _setMaxAmount() {
-    // Set max amount minus estimated gas fee (0.001 ETH)
-    final maxAmount = (_ethBalance - 0.001).clamp(0.0, _ethBalance);
+    if (_selectedToken == null) return;
+    
+    // Set max amount minus estimated gas fee for native token
+    double maxAmount;
+    if (_selectedToken!.isNative) {
+      maxAmount = (_selectedTokenBalance - 0.001).clamp(0.0, _selectedTokenBalance);
+    } else {
+      maxAmount = _selectedTokenBalance; // For ERC-20 tokens, can send full amount
+    }
     _amountController.text = maxAmount.toStringAsFixed(6);
   }
 
@@ -184,10 +248,99 @@ class _SendScreenState extends State<SendScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Balance: ${_ethBalance.toStringAsFixed(6)} ${_currentNetwork?.currencySymbol ?? 'ETH'}',
+                      'Balance: ${_selectedTokenBalance.toStringAsFixed(6)} ${_selectedToken?.symbol ?? 'ETH'}',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Token selector
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Select Token',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<CustomTokenModel>(
+                          value: _selectedToken,
+                          isExpanded: true,
+                          hint: const Text('Select a token'),
+                          onChanged: (CustomTokenModel? newToken) {
+                            if (newToken != null) {
+                              setState(() => _selectedToken = newToken);
+                              _updateSelectedTokenBalance();
+                            }
+                          },
+                          items: _availableTokens.map<DropdownMenuItem<CustomTokenModel>>((CustomTokenModel token) {
+                            return DropdownMenuItem<CustomTokenModel>(
+                              value: token,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: token.isNative ? Colors.blue[100] : Colors.grey[200],
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        token.symbol.substring(0, token.symbol.length > 2 ? 2 : token.symbol.length).toUpperCase(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          token.symbol,
+                                          style: const TextStyle(fontWeight: FontWeight.w600),
+                                        ),
+                                        Text(
+                                          token.name,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Text(
+                                    token.balance.toStringAsFixed(6),
+                                    style: const TextStyle(fontWeight: FontWeight.w500),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ],
@@ -218,13 +371,14 @@ class _SendScreenState extends State<SendScreen> {
             TextField(
               controller: _amountController,
               decoration: InputDecoration(
-                labelText: 'Amount',
+                labelText: 'Amount (${_selectedToken?.symbol ?? 'ETH'})',
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.monetization_on),
                 suffixIcon: TextButton(
                   onPressed: _setMaxAmount,
                   child: const Text('MAX'),
                 ),
+                helperText: 'Available: ${_selectedTokenBalance.toStringAsFixed(6)} ${_selectedToken?.symbol ?? 'ETH'}',
               ),
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
@@ -279,7 +433,7 @@ class _SendScreenState extends State<SendScreen> {
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Send Coin'),
+                    : Text('Send ${_selectedToken?.symbol ?? 'ETH'}'),
               ),
             ),
           ],
