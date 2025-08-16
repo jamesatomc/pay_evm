@@ -265,7 +265,7 @@ class _SendScreenState extends State<SendScreen> {
                 ),
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('ส่งเงิน'),
+                    : const Text('Send Coin'),
               ),
             ),
           ],

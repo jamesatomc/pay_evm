@@ -7,18 +7,38 @@ import 'package:http/http.dart';
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:pointycastle/export.dart';
 import '../models/wallet_model.dart';
+import '../models/network_model.dart';
+import 'network_service.dart';
 
 class WalletService {
   static const String _walletKey = 'wallet_data';
   static const String _activeWalletKey = 'active_wallet';
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage();
   
-  // Ethereum RPC endpoint (you can use Infura, Alchemy, or local node)
-  static const String rpcUrl = 'https://mainnet.infura.io/v3/YOUR_PROJECT_ID';
-  late Web3Client _web3client;
+  final NetworkService _networkService = NetworkService();
+  Web3Client? _web3client;
+  NetworkModel? _currentNetwork;
 
   WalletService() {
-    _web3client = Web3Client(rpcUrl, Client());
+    _initializeNetwork();
+  }
+
+  Future<void> _initializeNetwork() async {
+    _currentNetwork = await _networkService.getActiveNetwork();
+    _web3client = Web3Client(_currentNetwork!.rpcUrl, Client());
+  }
+
+  Future<void> switchNetwork(String networkId) async {
+    await _networkService.setActiveNetwork(networkId);
+    _currentNetwork = await _networkService.getActiveNetwork();
+    _web3client = Web3Client(_currentNetwork!.rpcUrl, Client());
+  }
+
+  Future<NetworkModel> getCurrentNetwork() async {
+    if (_currentNetwork == null) {
+      await _initializeNetwork();
+    }
+    return _currentNetwork!;
   }
 
   // Generate new wallet with mnemonic
@@ -192,8 +212,9 @@ class WalletService {
   // Get ETH balance
   Future<double> getEthBalance(String address) async {
     try {
+      if (_web3client == null) await _initializeNetwork();
       final ethAddress = EthereumAddress.fromHex(address);
-      final balance = await _web3client.getBalance(ethAddress);
+      final balance = await _web3client!.getBalance(ethAddress);
       return balance.getValueInUnit(EtherUnit.ether);
     } catch (e) {
       print('Error getting ETH balance: $e');
@@ -249,10 +270,11 @@ class WalletService {
         value: etherAmount,
       );
       
-      final txHash = await _web3client.sendTransaction(
+      if (_web3client == null) await _initializeNetwork();
+      final txHash = await _web3client!.sendTransaction(
         credentials,
         transaction,
-        chainId: 1, // Mainnet
+        chainId: _currentNetwork!.chainId,
       );
       
       return txHash;
@@ -262,6 +284,6 @@ class WalletService {
   }
 
   void dispose() {
-    _web3client.dispose();
+    _web3client?.dispose();
   }
 }

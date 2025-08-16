@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/wallet_service.dart';
 import '../models/wallet_model.dart';
+import '../models/network_model.dart';
 import 'CreateWalletScreen.dart';
 import 'WalletListScreen.dart';
 import 'SendScreen.dart';
 import 'ReceiveScreen.dart';
+import 'NetworkSelectionScreen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -18,25 +20,13 @@ class WalletScreen extends StatefulWidget {
 class WalletScreenState extends State<WalletScreen> {
   final WalletService _walletService = WalletService();
   WalletModel? _currentWallet;
+  NetworkModel? _currentNetwork;
   double _ethBalance = 0.0;
   bool _isLoading = true;
   
   // Dummy data for other assets
   final List<Map<String, dynamic>> _otherAssets = [
-    {
-      'name': 'Tether',
-      'symbol': 'USDT',
-      'amount': 1050.22,
-      'usd_value': 1050.22,
-      'icon': Icons.monetization_on_outlined
-    },
-    {
-      'name': 'Kanari Token',
-      'symbol': 'KNR',
-      'amount': 15000.0,
-      'usd_value': 300.0,
-      'icon': Icons.token_outlined
-    },
+
   ];
 
   @override
@@ -56,11 +46,18 @@ class WalletScreenState extends State<WalletScreen> {
     
     try {
       final wallet = await _walletService.getActiveWallet();
+      final network = await _walletService.getCurrentNetwork();
+      
       if (wallet != null) {
         final balance = await _walletService.getEthBalance(wallet.address);
         setState(() {
           _currentWallet = wallet;
+          _currentNetwork = network;
           _ethBalance = balance;
+        });
+      } else {
+        setState(() {
+          _currentNetwork = network;
         });
       }
     } catch (e) {
@@ -75,6 +72,17 @@ class WalletScreenState extends State<WalletScreen> {
     double total = _ethBalance * 1800; // Assume ETH price $1800 for demo
     total += _otherAssets.fold(0.0, (sum, item) => sum + (item['usd_value'] as double));
     return total;
+  }
+
+  Future<void> _openNetworkSelection() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => const NetworkSelectionScreen()),
+    );
+    
+    if (result == true) {
+      await _loadWallet(); // Reload to update network and balance
+    }
   }
 
   Future<void> _openCreateWallet() async {
@@ -109,12 +117,80 @@ class WalletScreenState extends State<WalletScreen> {
     }
   }
 
+  Color _getNetworkColor(NetworkModel network) {
+    if (network.isCustom) return Colors.blue;
+    if (network.isTestnet) return Colors.orange;
+    
+    switch (network.id) {
+      case 'ethereum':
+      case 'sepolia':
+        return const Color(0xFF627EEA);
+      case 'bsc':
+      case 'bsc-testnet':
+        return const Color(0xFFF3BA2F);
+      case 'polygon':
+      case 'mumbai':
+        return const Color(0xFF8247E5);
+      case 'avalanche':
+      case 'fuji':
+        return const Color(0xFFE84142);
+      case 'fantom':
+      case 'fantom-testnet':
+        return const Color(0xFF1969FF);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getNetworkIcon(NetworkModel network) {
+    if (network.isCustom) return Icons.lan;
+    if (network.isTestnet) return Icons.code;
+    
+    switch (network.id) {
+      case 'ethereum':
+      case 'sepolia':
+        return Icons.currency_bitcoin; // Use as Ethereum placeholder
+      case 'bsc':
+      case 'bsc-testnet':
+        return Icons.account_balance;
+      case 'polygon':
+      case 'mumbai':
+        return Icons.hexagon;
+      case 'avalanche':
+      case 'fuji':
+        return Icons.ac_unit;
+      case 'fantom':
+      case 'fantom-testnet':
+        return Icons.speed;
+      default:
+        return Icons.link;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kanari Wallet'),
         centerTitle: true,
+        leading: _currentNetwork != null
+            ? IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: _getNetworkColor(_currentNetwork!),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _getNetworkIcon(_currentNetwork!),
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+                onPressed: _openNetworkSelection,
+                tooltip: _currentNetwork!.name,
+              )
+            : null,
         actions: [
           IconButton(
             icon: const Icon(Icons.account_balance_wallet),
@@ -196,9 +272,46 @@ class WalletScreenState extends State<WalletScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text('Total Balance', style: TextStyle(fontSize: 16, color: Colors.grey)),
-                Text(
-                  _currentWallet?.name ?? '',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                Row(
+                  children: [
+                    if (_currentNetwork != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: _getNetworkColor(_currentNetwork!).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: _getNetworkColor(_currentNetwork!),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _getNetworkIcon(_currentNetwork!),
+                              size: 12,
+                              color: _getNetworkColor(_currentNetwork!),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _currentNetwork!.name,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: _getNetworkColor(_currentNetwork!),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      _currentWallet?.name ?? '',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -278,8 +391,8 @@ class WalletScreenState extends State<WalletScreen> {
     // Combine ETH with other assets
     final allAssets = [
       {
-        'name': 'Ethereum',
-        'symbol': 'ETH',
+        'name': _currentNetwork?.name ?? 'Ethereum',
+        'symbol': _currentNetwork?.currencySymbol ?? 'ETH',
         'amount': _ethBalance,
         'usd_value': _ethBalance * 1800, // Demo price
         'icon': Icons.currency_bitcoin
