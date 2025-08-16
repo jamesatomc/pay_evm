@@ -103,7 +103,8 @@ class WalletScreenState extends State<WalletScreen> {
     if (_currentWallet != null) {
       Clipboard.setData(ClipboardData(text: _currentWallet!.address));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('คัดลอกที่อยู่แล้ว')),
+        //eng
+        const SnackBar(content: Text('Copied')),
       );
     }
   }
@@ -145,19 +146,19 @@ class WalletScreenState extends State<WalletScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'ยังไม่มีกระเป๋า',
+            'No wallets yet',
             style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            'เริ่มต้นโดยการสร้างกระเป๋าใหม่',
+            'Start by creating a new wallet',
             style: TextStyle(color: Colors.grey[500]),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: _openCreateWallet,
             icon: const Icon(Icons.add),
-            label: const Text('สร้างกระเป๋าใหม่'),
+            label: const Text('Create New Wallet'),
           ),
         ],
       ),

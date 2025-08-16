@@ -150,7 +150,8 @@ class _WalletListScreenState extends State<WalletListScreen> {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: value));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('คัดลอกแล้ว')),
+                  //eng
+                  const SnackBar(content: Text('Copied')),
                 );
               },
             ),
@@ -191,7 +192,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('กระเป๋าของฉัน'),
+        title: const Text('My Wallets'),
         centerTitle: true,
       ),
       body: _isLoading
@@ -214,12 +215,12 @@ class _WalletListScreenState extends State<WalletListScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'ยังไม่มีกระเป๋า',
+            'No wallets yet',
             style: TextStyle(fontSize: 18, color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            'เริ่มต้นโดยการสร้างกระเป๋าใหม่',
+            'Start by creating a new wallet',
             style: TextStyle(color: Colors.grey[500]),
           ),
         ],
@@ -257,7 +258,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(
-                      'กำลังใช้',
+                      'In Use',
                       style: TextStyle(color: Colors.white, fontSize: 10),
                     ),
                   ),
@@ -289,7 +290,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
                       children: [
                         Icon(Icons.swap_horiz),
                         SizedBox(width: 8),
-                        Text('เปลี่ยนเป็นกระเป๋าหลัก'),
+                        Text('Switch to Primary Wallet'),
                       ],
                     ),
                   ),
@@ -299,7 +300,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
                     children: [
                       Icon(Icons.info),
                       SizedBox(width: 8),
-                      Text('ดูรายละเอียด'),
+                      Text('View Details'),
                     ],
                   ),
                 ),
@@ -309,7 +310,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
                     children: [
                       Icon(Icons.delete, color: Colors.red),
                       SizedBox(width: 8),
-                      Text('ลบกระเป๋า', style: TextStyle(color: Colors.red)),
+                      Text('Delete Wallet', style: TextStyle(color: Colors.red)),
                     ],
                   ),
                 ),

@@ -29,7 +29,8 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
 
   Future<void> _createNewWallet() async {
     if (_nameController.text.trim().isEmpty) {
-      _showError('กรุณาใส่ชื่อกระเป๋า');
+      //eng
+      _showError('Please enter a wallet name');
       return;
     }
 
@@ -39,11 +40,11 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
       final wallet = await _walletService.createNewWallet(_nameController.text.trim());
       if (mounted) {
         Navigator.pop(context, wallet);
-        _showSuccess('สร้างกระเป๋าใหม่สำเร็จ!');
+        _showSuccess('Wallet created successfully!');
       }
     } catch (e) {
       if (mounted) {
-        _showError('เกิดข้อผิดพลาดในการสร้างกระเป๋า: $e');
+        _showError('Error creating wallet: $e');
       }
     } finally {
       setState(() => _isLoading = false);
@@ -52,12 +53,12 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
 
   Future<void> _importFromMnemonic() async {
     if (_nameController.text.trim().isEmpty) {
-      _showError('กรุณาใส่ชื่อกระเป๋า');
+      _showError('Please enter a wallet name');
       return;
     }
 
     if (_mnemonicController.text.trim().isEmpty) {
-      _showError('กรุณาใส่ Mnemonic phrase');
+      _showError('Please enter a Mnemonic phrase');
       return;
     }
 
@@ -70,11 +71,11 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
       );
       if (mounted) {
         Navigator.pop(context, wallet);
-        _showSuccess('นำเข้ากระเป๋าสำเร็จ!');
+        _showSuccess('Wallet imported successfully!');
       }
     } catch (e) {
       if (mounted) {
-        _showError('เกิดข้อผิดพลาดในการนำเข้ากระเป๋า: $e');
+        _showError('Error importing wallet: $e');
       }
     } finally {
       setState(() => _isLoading = false);
@@ -83,12 +84,12 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
 
   Future<void> _importFromPrivateKey() async {
     if (_nameController.text.trim().isEmpty) {
-      _showError('กรุณาใส่ชื่อกระเป๋า');
+      _showError('Please enter a wallet name');
       return;
     }
 
     if (_privateKeyController.text.trim().isEmpty) {
-      _showError('กรุณาใส่ Private Key');
+      _showError('Please enter a Private Key');
       return;
     }
 
@@ -101,11 +102,11 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
       );
       if (mounted) {
         Navigator.pop(context, wallet);
-        _showSuccess('นำเข้ากระเป๋าสำเร็จ!');
+        _showSuccess('Wallet imported successfully!');
       }
     } catch (e) {
       if (mounted) {
-        _showError('เกิดข้อผิดพลาดในการนำเข้ากระเป๋า: $e');
+        _showError('Error importing wallet: $e');
       }
     } finally {
       setState(() => _isLoading = false);
@@ -134,7 +135,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('เพิ่มกระเป๋า'),
+        title: const Text('Create Wallet'),
         centerTitle: true,
       ),
       body: Column(
@@ -158,7 +159,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'สร้างใหม่',
+                        'Create New',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: _selectedTab == 0 ? Colors.white : Colors.black,
@@ -232,7 +233,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
         TextField(
           controller: _nameController,
           decoration: const InputDecoration(
-            labelText: 'ชื่อกระเป๋า',
+            labelText: 'Wallet Name',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.account_balance_wallet),
           ),
@@ -280,16 +281,16 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
                     Icon(Icons.info, color: Theme.of(context).primaryColor),
                     const SizedBox(width: 8),
                     const Text(
-                      'สร้างกระเป๋าใหม่',
+                      'Create New Wallet',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '• ระบบจะสร้าง Mnemonic phrase ให้คุณโดยอัตโนมัติ\n'
-                  '• กรุณาบันทึก Mnemonic phrase ให้ปลอดภัย\n'
-                  '• อย่าแชร์ Mnemonic phrase กับใครเด็ดขาด',
+                  '• The system will automatically generate a Mnemonic phrase for you\n'
+                  '• Please keep the Mnemonic phrase safe\n'
+                  '• Do not share the Mnemonic phrase with anyone',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -306,10 +307,10 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
         TextField(
           controller: _mnemonicController,
           decoration: const InputDecoration(
-            labelText: 'Mnemonic Phrase (12 คำ)',
+            labelText: 'Mnemonic Phrase (12 words)',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.vpn_key),
-            helperText: 'ใส่ Mnemonic phrase คั่นด้วยเว้นวรรค',
+            helperText: 'Enter Mnemonic phrase separated by spaces',
           ),
           maxLines: 3,
         ),
@@ -324,7 +325,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'ตรวจสอบ Mnemonic phrase ให้ถูกต้องก่อนดำเนินการ',
+                    'Please verify the Mnemonic phrase before proceeding',
                     style: TextStyle(fontSize: 12),
                   ),
                 ),
@@ -345,7 +346,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
             labelText: 'Private Key',
             border: OutlineInputBorder(),
             prefixIcon: Icon(Icons.lock),
-            helperText: 'ใส่ Private Key (ขึ้นต้นด้วย 0x หรือไม่ก็ได้)',
+            helperText: 'Enter Private Key (can start with 0x or not)',
           ),
           obscureText: true,
         ),
@@ -360,7 +361,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'Private Key คือข้อมูลที่สำคัญมาก อย่าแชร์กับใครเด็ดขาด',
+                    'Private Key is very important information. Do not share it with anyone.',
                     style: TextStyle(fontSize: 12),
                   ),
                 ),
@@ -388,13 +389,13 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
   String _getButtonText() {
     switch (_selectedTab) {
       case 0:
-        return 'สร้างกระเป๋าใหม่';
+        return 'Create New Wallet';
       case 1:
-        return 'นำเข้าจาก Mnemonic';
+        return 'Import from Mnemonic';
       case 2:
-        return 'นำเข้าจาก Private Key';
+        return 'Import from Private Key';
       default:
-        return 'ดำเนินการ';
+        return 'Proceed';
     }
   }
 }

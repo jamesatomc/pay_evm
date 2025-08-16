@@ -38,7 +38,7 @@ class ShowMnemonicScreen extends StatelessWidget {
                     Icon(Icons.security, color: Colors.red[700], size: 32),
                     const SizedBox(height: 8),
                     Text(
-                      'สำคัญมาก!',
+                      'Important!',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -147,7 +147,7 @@ class ShowMnemonicScreen extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () => _copyMnemonic(context),
                 icon: const Icon(Icons.copy),
-                label: const Text('คัดลอก Mnemonic'),
+                label: const Text('Copy Mnemonic'),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -168,7 +168,7 @@ class ShowMnemonicScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('ฉันได้บันทึกแล้ว'),
+                child: const Text('I have saved it'),
               ),
             ),
           ],

@@ -277,7 +277,7 @@ class _SendScreenState extends State<SendScreen> {
   Widget _buildQRScanner() {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('สแกน QR Code'),
+        title: const Text('Scan QR Code'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => setState(() => _showScanner = false),

@@ -19,7 +19,7 @@ class ReceiveScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('รับเงิน'),
+        title: const Text('Receive'),
         centerTitle: true,
       ),
       body: Padding(
@@ -79,7 +79,7 @@ class ReceiveScreen extends StatelessWidget {
                         Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor),
                         const SizedBox(width: 8),
                         Text(
-                          'ชื่อกระเป๋า',
+                          'Address',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.grey[700],
@@ -139,7 +139,7 @@ class ReceiveScreen extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () => _copyAddress(context),
                 icon: const Icon(Icons.copy),
-                label: const Text('คัดลอกที่อยู่'),
+                label: const Text('Copy Address'),
                 style: ElevatedButton.styleFrom(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
