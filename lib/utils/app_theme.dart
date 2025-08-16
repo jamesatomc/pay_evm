@@ -5,6 +5,7 @@ class AppTheme {
   static const Color primaryColor = Color(0xFF2563EB); // Modern blue
   static const Color primaryVariant = Color(0xFF1D4ED8);
   static const Color secondaryColor = Color(0xFF10B981); // Success green
+  static const Color successColor = Color(0xFF10B981); // Success green (alias)
   static const Color errorColor = Color(0xFFEF4444);
   static const Color warningColor = Color(0xFFF59E0B);
   static const Color surfaceColor = Color(0xFFF8FAFC);

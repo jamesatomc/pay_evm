@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/wallet_service.dart';
+import '../services/token_service.dart';
 import '../models/wallet_model.dart';
 import '../models/network_model.dart';
+import '../models/token_model.dart';
 import '../utils/app_theme.dart';
 import '../utils/custom_widgets.dart';
 import 'CreateWalletScreen.dart';
@@ -10,6 +12,7 @@ import 'WalletListScreen.dart';
 import 'SendScreen.dart';
 import 'ReceiveScreen.dart';
 import 'NetworkSelectionScreen.dart';
+import 'AddTokenScreen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -21,15 +24,12 @@ class WalletScreen extends StatefulWidget {
 
 class WalletScreenState extends State<WalletScreen> {
   final WalletService _walletService = WalletService();
+  final TokenService _tokenService = TokenService();
   WalletModel? _currentWallet;
   NetworkModel? _currentNetwork;
   double _ethBalance = 0.0;
   bool _isLoading = true;
-  
-  // Demo data for other assets
-  final List<Map<String, dynamic>> _otherAssets = [
-    // You can add more assets here
-  ];
+  List<CustomTokenModel> _tokens = [];
 
   @override
   void initState() {
@@ -53,16 +53,22 @@ class WalletScreenState extends State<WalletScreen> {
       if (wallet != null) {
         print('Loading balance for wallet: ${wallet.address} on network: ${network.name}');
         final balance = await _walletService.getEthBalance(wallet.address);
+        
+        // Load tokens for this wallet and network
+        final tokens = await _tokenService.getTokenBalances(wallet, network.id);
+        
         print('Balance loaded: $balance ${network.currencySymbol}');
         setState(() {
           _currentWallet = wallet;
           _currentNetwork = network;
           _ethBalance = balance;
+          _tokens = tokens;
         });
       } else {
         print('No wallet found, setting network: ${network.name}');
         setState(() {
           _currentNetwork = network;
+          _tokens = [];
         });
       }
     } catch (e) {
@@ -77,7 +83,14 @@ class WalletScreenState extends State<WalletScreen> {
     // Use current network's currency price (demo prices)
     double nativeTokenPrice = _getNativeTokenPrice();
     double total = _ethBalance * nativeTokenPrice;
-    total += _otherAssets.fold(0.0, (sum, item) => sum + (item['usd_value'] as double));
+    
+    // Add custom token values
+    for (final token in _tokens) {
+      if (!token.isNative) {
+        total += token.usdValue;
+      }
+    }
+    
     return total;
   }
 
@@ -351,9 +364,7 @@ class WalletScreenState extends State<WalletScreen> {
                   ),
                 ),
                 TextButton.icon(
-                  onPressed: () {
-                    // TODO: Add token functionality
-                  },
+                  onPressed: _openAddTokenScreen,
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text('Add Token'),
                   style: TextButton.styleFrom(
@@ -419,20 +430,38 @@ class WalletScreenState extends State<WalletScreen> {
     }
   }
 
-  Widget _buildAssetList() {
-    // Combine native token with other assets
-    final allAssets = [
-      {
-        'name': _currentNetwork?.name ?? 'Ethereum',
-        'symbol': _currentNetwork?.currencySymbol ?? 'ETH',
-        'amount': _ethBalance,
-        'usd_value': _ethBalance * _getNativeTokenPrice(),
-        'icon': _currentNetwork != null ? _getNetworkIcon(_currentNetwork!) : Icons.currency_bitcoin
-      },
-      ..._otherAssets,
-    ];
+  Future<void> _openAddTokenScreen() async {
+    if (_currentNetwork != null) {
+      final result = await Navigator.push<CustomTokenModel>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AddTokenScreen(network: _currentNetwork!),
+        ),
+      );
+      
+      if (result != null) {
+        // Reload wallet to show the new token
+        await _loadWallet();
+      }
+    }
+  }
 
-    if (allAssets.isEmpty) {
+  // Debug function to clear all tokens
+  Future<void> _clearAllTokens() async {
+    await _tokenService.clearAllTokens();
+    await _loadWallet();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('All custom tokens cleared'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    }
+  }
+
+  Widget _buildAssetList() {
+    if (_tokens.isEmpty) {
       return const EmptyState(
         title: 'No Assets Yet',
         subtitle: 'Your tokens will appear here once you receive them',
@@ -441,18 +470,195 @@ class WalletScreenState extends State<WalletScreen> {
     }
 
     return Column(
-      children: allAssets.map((asset) {
+      children: _tokens.map((token) {
         return AssetListItem(
-          name: asset['name'],
-          symbol: asset['symbol'],
-          amount: asset['amount'] as double,
-          usdValue: asset['usd_value'] as double,
-          icon: asset['icon'] as IconData?,
+          name: token.name,
+          symbol: token.symbol,
+          amount: token.balance,
+          usdValue: token.usdValue,
+          iconUrl: token.iconUrl,
+          icon: token.isNative && _currentNetwork != null 
+              ? _getNetworkIcon(_currentNetwork!) 
+              : Icons.token,
           onTap: () {
-            // TODO: Show asset details
+            // TODO: Show token details
+            _showTokenDetails(token);
           },
         );
       }).toList(),
     );
+  }
+
+  void _showTokenDetails(CustomTokenModel token) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(AppTheme.borderRadiusLarge),
+            topRight: Radius.circular(AppTheme.borderRadiusLarge),
+          ),
+        ),
+        padding: const EdgeInsets.all(AppTheme.spacingL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacingL),
+            
+            // Token info
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceColor,
+                    borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                  ),
+                  child: token.iconUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                          child: Image.network(
+                            token.iconUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.token, color: AppTheme.primaryColor),
+                          ),
+                        )
+                      : Icon(
+                          token.isNative && _currentNetwork != null 
+                              ? _getNetworkIcon(_currentNetwork!) 
+                              : Icons.token, 
+                          color: AppTheme.primaryColor,
+                        ),
+                ),
+                const SizedBox(width: AppTheme.spacingM),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        token.name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        token.symbol,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: AppTheme.spacingL),
+            
+            // Balance info
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceColor,
+                borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    '${token.balance.toStringAsFixed(4)} ${token.symbol}',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: AppTheme.spacingS),
+                  Text(
+                    '\$${token.usdValue.toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: AppTheme.spacingL),
+            
+            // Actions
+            if (!token.isNative) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _removeToken(token);
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Remove Token'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.errorColor,
+                        side: BorderSide(color: AppTheme.errorColor),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _removeToken(CustomTokenModel token) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Token'),
+        content: Text('Are you sure you want to remove ${token.symbol} from your wallet?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final success = await _tokenService.removeCustomToken(
+        token.contractAddress, 
+        token.networkId,
+      );
+      
+      if (success) {
+        await _loadWallet(); // Reload to update the list
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${token.symbol} removed successfully'),
+              backgroundColor: AppTheme.secondaryColor,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 }
