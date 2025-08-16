@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/wallet_service.dart';
-import '../utils/app_theme.dart';
-import '../utils/custom_widgets.dart';
+
 
 class CreateWalletScreen extends StatefulWidget {
   const CreateWalletScreen({super.key});

@@ -1,3 +1,4 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 import '../services/network_service.dart';
 import '../models/network_model.dart';
@@ -39,7 +40,8 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('เกิดข้อผิดพลาดในการโหลดเครือข่าย: $e');
+      //eng
+      _showError('Error loading networks: $e');
     }
   }
 
@@ -52,7 +54,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เปลี่ยนไปใช้เครือข่าย ${network.name} แล้ว'),
+            content: Text('Switched to network ${network.name}'),
             backgroundColor: Colors.green,
           ),
         );
@@ -61,7 +63,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      _showError('เกิดข้อผิดพลาดในการเปลี่ยนเครือข่าย: $e');
+      _showError('Error switching networks: $e');
     }
   }
 
@@ -76,16 +78,16 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('ลบเครือข่าย ${network.name} แล้ว'),
+              content: Text('Deleted network ${network.name}'),
               backgroundColor: Colors.orange,
             ),
           );
         }
       } else {
-        _showError('ไม่สามารถลบเครือข่ายได้');
+        _showError('Unable to delete network');
       }
     } catch (e) {
-      _showError('เกิดข้อผิดพลาดในการลบเครือข่าย: $e');
+      _showError('Error deleting network: $e');
     }
   }
 
@@ -93,17 +95,17 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
     return await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ยืนยันการลบ'),
-        content: Text('คุณต้องการลบเครือข่าย "$networkName" หรือไม่?'),
+        title: const Text('Confirm Deletion'),
+        content: Text('Are you sure you want to delete the network "$networkName"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('ยกเลิก'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('ลบ'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -200,7 +202,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                       children: [
                         Icon(Icons.edit),
                         SizedBox(width: 8),
-                        Text('แก้ไข'),
+                        Text('Edit'),
                       ],
                     ),
                   ),
@@ -210,7 +212,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                       children: [
                         Icon(Icons.delete, color: Colors.red),
                         SizedBox(width: 8),
-                        Text('ลบ', style: TextStyle(color: Colors.red)),
+                        Text('Delete', style: TextStyle(color: Colors.red)),
                       ],
                     ),
                   ),
@@ -324,13 +326,13 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('เลือกเครือข่าย'),
+        title: const Text('Select Network'),
         centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: _addCustomNetwork,
-            tooltip: 'เพิ่มเครือข่ายที่กำหนดเอง',
+            tooltip: 'Add Custom Network',
           ),
         ],
       ),
@@ -344,7 +346,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      'เครือข่ายหลัก',
+                      'Main Networks',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -359,7 +361,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
-                        'เครือข่าย Testnet',
+                        'Testnet Networks',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -375,7 +377,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
-                        'เครือข่ายที่กำหนดเอง',
+                        'Custom Networks',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -392,7 +394,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                     child: OutlinedButton.icon(
                       onPressed: _addCustomNetwork,
                       icon: const Icon(Icons.add),
-                      label: const Text('เพิ่มเครือข่ายที่กำหนดเอง'),
+                      label: const Text('Add Custom Network'),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.all(16),
                       ),

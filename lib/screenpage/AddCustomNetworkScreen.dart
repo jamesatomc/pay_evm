@@ -1,8 +1,11 @@
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/network_service.dart';
 import '../models/network_model.dart';
 
+// eng
+// AddCustomNetworkScreen
 class AddCustomNetworkScreen extends StatefulWidget {
   final NetworkModel? network; // For editing existing network
   
@@ -57,11 +60,11 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
 
   bool get _isEditing => widget.network != null;
 
-  String get _title => _isEditing ? 'แก้ไขเครือข่าย' : 'เพิ่มเครือข่ายใหม่';
+  String get _title => _isEditing ? 'Edit Network' : 'Add New Network';
 
   Future<void> _testConnection() async {
     if (_rpcUrlController.text.trim().isEmpty) {
-      _showError('กรุณาใส่ URL ของ RPC');
+      _showError('Please enter the RPC URL');
       return;
     }
 
@@ -78,16 +81,16 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
       });
 
       if (result) {
-        _showSuccess('การเชื่อมต่อสำเร็จ!');
+        _showSuccess('Connection Successful!');
       } else {
-        _showError('ไม่สามารถเชื่อมต่อได้');
+        _showError('Connection Failed');
       }
     } catch (e) {
       setState(() {
         _connectionTestResult = false;
         _hasTestedConnection = true;
       });
-      _showError('เกิดข้อผิดพลาดในการทดสอบการเชื่อมต่อ: $e');
+      _showError('Error testing connection: $e');
     } finally {
       setState(() => _isTestingConnection = false);
     }
@@ -129,16 +132,16 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
 
       if (success) {
         if (mounted) {
-          _showSuccess(_isEditing ? 'อัปเดตเครือข่ายสำเร็จ' : 'เพิ่มเครือข่ายสำเร็จ');
+          _showSuccess(_isEditing ? 'Network Updated Successfully' : 'Network Added Successfully');
           Navigator.pop(context, true);
         }
       } else {
         _showError(_isEditing 
-            ? 'ไม่สามารถอัปเดตเครือข่ายได้' 
-            : 'ไม่สามารถเพิ่มเครือข่ายได้ (อาจมีอยู่แล้ว)');
+            ? 'Failed to Update Network' 
+            : 'Failed to Add Network (may already exist)');
       }
     } catch (e) {
-      _showError('เกิดข้อผิดพลาด: $e');
+      _showError('Error: $e');
     } finally {
       setState(() => _isLoading = false);
     }
@@ -168,19 +171,19 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
 
   String? _validateRequired(String? value, String fieldName) {
     if (value == null || value.trim().isEmpty) {
-      return 'กรุณาใส่$fieldName';
+      return 'Please enter $fieldName';
     }
     return null;
   }
 
   String? _validateUrl(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'กรุณาใส่ URL ของ RPC';
+      return 'Please enter the RPC URL';
     }
     
     final uri = Uri.tryParse(value.trim());
     if (uri == null || (!uri.scheme.startsWith('http'))) {
-      return 'กรุณาใส่ URL ที่ถูกต้อง (เริ่มด้วย http:// หรือ https://)';
+      return 'Please enter a valid URL (starting with http:// or https://)';
     }
     
     return null;
@@ -188,12 +191,12 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
 
   String? _validateChainId(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'กรุณาใส่ Chain ID';
+      return 'Please enter Chain ID';
     }
     
     final chainId = int.tryParse(value.trim());
     if (chainId == null || chainId < 1) {
-      return 'กรุณาใส่ Chain ID ที่ถูกต้อง';
+      return 'Please enter a valid Chain ID';
     }
     
     return null;
@@ -206,14 +209,14 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
     
     final uri = Uri.tryParse(value.trim());
     if (uri == null || !uri.scheme.startsWith('http')) {
-      return 'กรุณาใส่ URL ของรูป icon ที่ถูกต้อง';
+      return 'Please enter a valid icon URL';
     }
     
     // Check if URL might be an image
     final path = uri.path.toLowerCase();
     if (!path.endsWith('.png') && !path.endsWith('.jpg') && !path.endsWith('.jpeg') && 
         !path.endsWith('.gif') && !path.endsWith('.svg') && !path.endsWith('.webp')) {
-      return 'URL ควรเป็นไฟล์รูปภาพ (.png, .jpg, .svg ฯลฯ)';
+      return 'URL should be an image file (.png, .jpg, .svg, etc.)';
     }
     
     return null;
@@ -227,7 +230,9 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: _connectionTestResult 
+            // ignore: deprecated_member_use
             ? Colors.green.withOpacity(0.1)
+            // ignore: deprecated_member_use
             : Colors.red.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
@@ -244,7 +249,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
           ),
           const SizedBox(width: 8),
           Text(
-            _connectionTestResult ? 'การเชื่อมต่อสำเร็จ' : 'การเชื่อมต่อล้มเหลว',
+            _connectionTestResult ? 'Connection Successful' : 'Connection Failed',
             style: TextStyle(
               color: _connectionTestResult ? Colors.green : Colors.red,
               fontWeight: FontWeight.bold,
@@ -266,7 +271,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
             TextButton(
               onPressed: _saveNetwork,
               child: Text(
-                _isEditing ? 'อัปเดต' : 'บันทึก',
+                _isEditing ? 'Update' : 'Save',
                 style: const TextStyle(color: Colors.white),
               ),
             ),
@@ -283,12 +288,12 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: 'ชื่อเครือข่าย *',
-                      hintText: 'เช่น My Custom Chain',
+                      labelText: 'Network Name *',
+                      hintText: 'e.g. My Custom Chain',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.label),
                     ),
-                    validator: (value) => _validateRequired(value, 'ชื่อเครือข่าย'),
+                    validator: (value) => _validateRequired(value, 'Network Name'),
                   ),
                   
                   const SizedBox(height: 16),
@@ -310,7 +315,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                           : IconButton(
                               icon: const Icon(Icons.wifi_find),
                               onPressed: _testConnection,
-                              tooltip: 'ทดสอบการเชื่อมต่อ',
+                              tooltip: 'Test Connection',
                             ),
                     ),
                     validator: _validateUrl,
@@ -333,7 +338,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                     controller: _chainIdController,
                     decoration: const InputDecoration(
                       labelText: 'Chain ID *',
-                      hintText: 'เช่น 1337',
+                      hintText: 'e.g. 1337',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.tag),
                     ),
@@ -348,13 +353,13 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   TextFormField(
                     controller: _currencySymbolController,
                     decoration: const InputDecoration(
-                      labelText: 'สัญลักษณ์เงินตรา *',
-                      hintText: 'เช่น ETH, BNB, MATIC',
+                      labelText: 'Currency Symbol *',
+                      hintText: 'e.g. ETH, BNB, MATIC',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.monetization_on),
                     ),
                     textCapitalization: TextCapitalization.characters,
-                    validator: (value) => _validateRequired(value, 'สัญลักษณ์เงินตรา'),
+                    validator: (value) => _validateRequired(value, 'Currency Symbol'),
                   ),
                   
                   const SizedBox(height: 16),
@@ -363,7 +368,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   TextFormField(
                     controller: _blockExplorerController,
                     decoration: const InputDecoration(
-                      labelText: 'Block Explorer URL (ไม่บังคับ)',
+                      labelText: 'Block Explorer URL (Optional)',
                       hintText: 'https://explorer.example.com',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.search),
@@ -376,7 +381,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   TextFormField(
                     controller: _iconUrlController,
                     decoration: InputDecoration(
-                      labelText: 'Icon URL (ไม่บังคับ)',
+                      labelText: 'Icon URL (Optional)',
                       hintText: 'https://example.com/icon.png',
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.image),
@@ -416,12 +421,13 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   ),
                   
                   const SizedBox(height: 16),
-                  
+
+                  // English
                   // Testnet Switch
                   Card(
                     child: SwitchListTile(
-                      title: const Text('เครือข่าย Testnet'),
-                      subtitle: const Text('เปิดใช้หากเป็นเครือข่ายทดสอบ'),
+                      title: const Text('Testnet Network'),
+                      subtitle: const Text('Enable if this is a test network'),
                       value: _isTestnet,
                       onChanged: (value) => setState(() => _isTestnet = value),
                       secondary: Icon(
@@ -437,14 +443,15 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   ElevatedButton.icon(
                     onPressed: _isLoading ? null : _saveNetwork,
                     icon: Icon(_isEditing ? Icons.update : Icons.add),
-                    label: Text(_isEditing ? 'อัปเดตเครือข่าย' : 'เพิ่มเครือข่าย'),
+                    label: Text(_isEditing ? 'Update Network' : 'Add Network'),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.all(16),
                     ),
                   ),
                   
                   const SizedBox(height: 16),
-                  
+
+                  // English
                   // Help Text
                   Card(
                     color: Colors.blue.withOpacity(0.1),
@@ -458,7 +465,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                               Icon(Icons.info, color: Colors.blue),
                               SizedBox(width: 8),
                               Text(
-                                'ข้อมูลที่ต้องการ',
+                                'Required Information',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue,
@@ -467,14 +474,14 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                             ],
                           ),
                           SizedBox(height: 8),
-                          Text('• ชื่อเครือข่าย: ชื่อที่จะแสดงในแอป'),
-                          Text('• RPC URL: URL สำหรับเชื่อมต่อกับเครือข่าย'),
-                          Text('• Chain ID: รหัสประจำเครือข่าย'),
-                          Text('• สัญลักษณ์เงินตรา: สัญลักษณ์ของเหรียญหลัก'),
-                          Text('• Block Explorer: URL สำหรับดูข้อมูลธุรกรรม (ไม่บังคับ)'),
-                          Text('• Icon URL: ลิงค์รูป icon ของเครือข่าย (ไม่บังคับ)'),
+                          Text('• Network Name: The name to be displayed in the app'),
+                          Text('• RPC URL: URL for connecting to the network'),
+                          Text('• Chain ID: The network\'s unique identifier'),
+                          Text('• Currency Symbol: The symbol of the main currency'),
+                          Text('• Block Explorer: URL for viewing transaction details (optional)'),
+                          Text('• Icon URL: Link to the network\'s icon image (optional)'),
                           SizedBox(height: 4),
-                          Text('  รองรับไฟล์: .png, .jpg, .svg, .webp', 
+                          Text('  Supported formats: .png, .jpg, .svg, .webp',
                                style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
                         ],
                       ),
