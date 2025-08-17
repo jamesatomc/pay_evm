@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pay_evm/utils/custom_widgets.dart';
+import 'package:pay_evm/screenpage/AppLockScreen.dart';
 import '../services/wallet_service.dart';
 import '../utils/app_theme.dart';
-import 'SecuritySetupScreen.dart';
 import '../main.dart';
 
 class CreateWalletScreen extends StatefulWidget {
@@ -89,7 +89,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SecuritySetupScreen(
+            builder: (context) => AppLockScreen(
               onSuccess: () {
                 // Navigate to the main screen to re-check authentication
                 Navigator.pushAndRemoveUntil(
@@ -159,7 +159,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SecuritySetupScreen(
+            builder: (context) => AppLockScreen(
               onSuccess: () {
                 // กลับไปที่หน้าหลักเพื่อให้ระบบตรวจสอบ authentication ใหม่
                 Navigator.pushAndRemoveUntil(
@@ -214,7 +214,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => SecuritySetupScreen(
+            builder: (context) => AppLockScreen(
               onSuccess: () {
                 // Navigate to the main screen to re-check authentication
                 Navigator.pushAndRemoveUntil(
@@ -376,107 +376,109 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
   Widget _buildCreateNewTab() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Wallet name field
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Wallet Name',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.account_balance_wallet),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Info card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info, color: Theme.of(context).primaryColor),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Create New Wallet',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '• The system will automatically generate a mnemonic phrase for you\n'
-                    '• Please keep the mnemonic phrase safe and secure\n'
-                    '• Do not share the mnemonic phrase with anyone\n'
-                    '• You can also import wallets with 24-word phrases',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ],
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Wallet name field
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Wallet Name',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.account_balance_wallet),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Mnemonic length selector
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Mnemonic Length',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: RadioListTile<int>(
-                          title: const Text('12 words'),
-                          subtitle: const Text('Standard (128-bit)'),
-                          value: 12,
-                          groupValue: _selectedMnemonicLength,
-                          onChanged: (value) {
-                            setState(() => _selectedMnemonicLength = value!);
-                          },
-                          contentPadding: EdgeInsets.zero,
+            // Info card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info, color: Theme.of(context).primaryColor),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Create New Wallet',
+                          style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                      ),
-                      Expanded(
-                        child: RadioListTile<int>(
-                          title: const Text('24 words'),
-                          subtitle: const Text('High Security (256-bit)'),
-                          value: 24,
-                          groupValue: _selectedMnemonicLength,
-                          onChanged: (value) {
-                            setState(() => _selectedMnemonicLength = value!);
-                          },
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '• The system will automatically generate a mnemonic phrase for you\n'
+                      '• Please keep the mnemonic phrase safe and secure\n'
+                      '• Do not share the mnemonic phrase with anyone\n'
+                      '• You can also import wallets with 24-word phrases',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
 
-          const Spacer(),
+            // Mnemonic length selector
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Mnemonic Length',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<int>(
+                            title: const Text('12 words'),
+                            subtitle: const Text('Standard (128-bit)'),
+                            value: 12,
+                            groupValue: _selectedMnemonicLength,
+                            onChanged: (value) {
+                              setState(() => _selectedMnemonicLength = value!);
+                            },
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        Expanded(
+                          child: RadioListTile<int>(
+                            title: const Text('24 words'),
+                            subtitle: const Text('High Security (256-bit)'),
+                            value: 24,
+                            groupValue: _selectedMnemonicLength,
+                            onChanged: (value) {
+                              setState(() => _selectedMnemonicLength = value!);
+                            },
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-          // Action button
-          CustomButton(
-            text: 'Create New Wallet ($_selectedMnemonicLength words)',
-            onPressed: _isLoading ? null : _createNewWallet,
-            isLoading: _isLoading,
-            icon: Icons.add_circle_outline,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        ],
+            const SizedBox(height: 24),
+
+            // Action button
+            CustomButton(
+              text: 'Create New Wallet ($_selectedMnemonicLength words)',
+              onPressed: _isLoading ? null : _createNewWallet,
+              isLoading: _isLoading,
+              icon: Icons.add_circle_outline,
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -484,123 +486,125 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
   Widget _buildImportMnemonicTab() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Wallet name field
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Wallet Name',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.account_balance_wallet),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Mnemonic input
-          TextField(
-            controller: _mnemonicController,
-            decoration: InputDecoration(
-              labelText: 'Mnemonic Phrase (12 or 24 words)',
-              border: const OutlineInputBorder(),
-              prefixIcon: const Icon(Icons.vpn_key),
-              suffixIcon: Container(
-                padding: const EdgeInsets.all(12),
-                child: Chip(
-                  label: Text(
-                    '$_mnemonicWordCount words',
-                    style: const TextStyle(fontSize: 11),
-                  ),
-                  backgroundColor:
-                      _mnemonicWordCount == 12 || _mnemonicWordCount == 24
-                      ? Theme.of(context).primaryColor.withOpacity(0.1)
-                      : _mnemonicWordCount > 0
-                      ? Theme.of(context).colorScheme.error.withOpacity(0.1)
-                      : Theme.of(context).cardColor,
-                ),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Wallet name field
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Wallet Name',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.account_balance_wallet),
               ),
-              helperText:
-                  'Enter 12 or 24 word mnemonic phrase separated by spaces',
             ),
-            maxLines: 4,
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Info cards
-          Card(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.info, color: Colors.blue[700], size: 20),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Supported Formats:',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+            // Mnemonic input
+            TextField(
+              controller: _mnemonicController,
+              decoration: InputDecoration(
+                labelText: 'Mnemonic Phrase (12 or 24 words)',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.vpn_key),
+                suffixIcon: Container(
+                  padding: const EdgeInsets.all(12),
+                  child: Chip(
+                    label: Text(
+                      '$_mnemonicWordCount words',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    backgroundColor:
+                        _mnemonicWordCount == 12 || _mnemonicWordCount == 24
+                        ? Theme.of(context).primaryColor.withOpacity(0.1)
+                        : _mnemonicWordCount > 0
+                        ? Theme.of(context).colorScheme.error.withOpacity(0.1)
+                        : Theme.of(context).cardColor,
+                  ),
+                ),
+                helperText:
+                    'Enter 12 or 24 word mnemonic phrase separated by spaces',
+              ),
+              maxLines: 4,
+            ),
+            const SizedBox(height: 16),
+
+            // Info cards
+            Card(
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.info, color: Colors.blue[700], size: 20),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Supported Formats:',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '• 12-word mnemonic phrase (BIP39)\n'
-                    '• 24-word mnemonic phrase (BIP39)\n'
-                    '• Words must be separated by spaces\n'
-                    '• Check spelling carefully before importing\n'
-                    '• Example: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"',
-                    style: TextStyle(fontSize: 12),
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '• 12-word mnemonic phrase (BIP39)\n'
+                      '• 24-word mnemonic phrase (BIP39)\n'
+                      '• Words must be separated by spaces\n'
+                      '• Check spelling carefully before importing\n'
+                      '• Example: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          Card(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppTheme.warningColor.withOpacity(0.15)
-                : AppTheme.warningColor.withOpacity(0.1),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Icon(Icons.warning, color: AppTheme.warningColor, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Please verify the mnemonic phrase before proceeding',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppTheme.darkTextPrimary
-                            : AppTheme.lightTextPrimary,
+            Card(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.warningColor.withOpacity(0.15)
+                  : AppTheme.warningColor.withOpacity(0.1),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning, color: AppTheme.warningColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Please verify the mnemonic phrase before proceeding',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          const Spacer(),
+            const SizedBox(height: 24),
 
-          // Action button
-          CustomButton(
-            text: 'Import from Mnemonic',
-            onPressed: _isLoading ? null : _importFromMnemonic,
-            isLoading: _isLoading,
-            icon: Icons.download,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        ],
+            // Action button
+            CustomButton(
+              text: 'Import from Mnemonic',
+              onPressed: _isLoading ? null : _importFromMnemonic,
+              isLoading: _isLoading,
+              icon: Icons.download,
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -608,71 +612,73 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
   Widget _buildImportPrivateKeyTab() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Wallet name field
-          TextField(
-            controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: 'Wallet Name',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.account_balance_wallet),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Private key input
-          TextField(
-            controller: _privateKeyController,
-            decoration: const InputDecoration(
-              labelText: 'Private Key',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.lock),
-              helperText: 'Enter Private Key (can start with 0x or not)',
-            ),
-            obscureText: true,
-          ),
-          const SizedBox(height: 16),
-
-          // Warning card
-          Card(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppTheme.errorColor.withOpacity(0.15)
-                : AppTheme.errorColor.withOpacity(0.1),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Icon(Icons.security, color: AppTheme.errorColor, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Private Key is very important information. Do not share it with anyone.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppTheme.darkTextPrimary
-                            : AppTheme.lightTextPrimary,
-                      ),
-                    ),
-                  ),
-                ],
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Wallet name field
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Wallet Name',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.account_balance_wallet),
               ),
             ),
-          ),
+            const SizedBox(height: 16),
 
-          const Spacer(),
+            // Private key input
+            TextField(
+              controller: _privateKeyController,
+              decoration: const InputDecoration(
+                labelText: 'Private Key',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+                helperText: 'Enter Private Key (can start with 0x or not)',
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 16),
 
-          // Action button
-          CustomButton(
-            text: 'Import from Private Key',
-            onPressed: _isLoading ? null : _importFromPrivateKey,
-            isLoading: _isLoading,
-            icon: Icons.vpn_key,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-        ],
+            // Warning card
+            Card(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.errorColor.withOpacity(0.15)
+                  : AppTheme.errorColor.withOpacity(0.1),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.security, color: AppTheme.errorColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Private Key is very important information. Do not share it with anyone.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Action button
+            CustomButton(
+              text: 'Import from Private Key',
+              onPressed: _isLoading ? null : _importFromPrivateKey,
+              isLoading: _isLoading,
+              icon: Icons.vpn_key,
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          ],
+        ),
       ),
     );
   }

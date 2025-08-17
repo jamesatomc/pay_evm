@@ -32,7 +32,7 @@ class ReceiveScreen extends StatelessWidget {
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -191,6 +191,7 @@ class ReceiveScreen extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
           ],
         ),
       ),

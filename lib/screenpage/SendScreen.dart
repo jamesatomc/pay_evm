@@ -265,7 +265,7 @@ class _SendScreenState extends State<SendScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -507,7 +507,7 @@ class _SendScreenState extends State<SendScreen> {
               ),
             ),
 
-            const Spacer(),
+            const SizedBox(height: 24),
 
             // Send button
             CustomButton(
@@ -517,6 +517,8 @@ class _SendScreenState extends State<SendScreen> {
               icon: Icons.send,
               backgroundColor: AppTheme.primaryColor,
             ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),

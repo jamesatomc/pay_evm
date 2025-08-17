@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pay_evm/screenpage/WelcomeScreen.dart';
 import 'package:pay_evm/screenpage/WalletScreen.dart';
-import 'package:pay_evm/screenpage/SecuritySetupScreen.dart';
 import 'package:pay_evm/screenpage/AppLockScreen.dart';
 import 'package:pay_evm/utils/app_theme.dart';
 import 'package:pay_evm/services/wallet_service.dart';
@@ -99,11 +98,11 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
       await Future.delayed(const Duration(milliseconds: 1500));
       
       final wallet = await _walletService.getActiveWallet();
-      final securitySetup = await _securityService.hasSecuritySetup();
-      
+      final isPinSetup = await _securityService.isPinSetup();
+
       setState(() {
         _hasWallet = wallet != null;
-        _hasSecuritySetup = securitySetup;
+        _hasSecuritySetup = isPinSetup;
         _isLoading = false;
       });
     } catch (e) {
@@ -199,7 +198,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
     if (!_hasWallet) {
       return const WelcomeScreen();
     } else if (!_hasSecuritySetup) {
-      return SecuritySetupScreen(
+      return AppLockScreen(
         onSuccess: () {
           setState(() {
             _hasSecuritySetup = true;

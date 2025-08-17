@@ -8,6 +8,8 @@ class PinVerificationScreen extends StatefulWidget {
   final String subtitle;
   final Function(String) onPinVerified;
   final VoidCallback? onCancel;
+  final bool showBiometric;
+  final VoidCallback? onBiometricPressed;
   
   const PinVerificationScreen({
     super.key,
@@ -15,6 +17,8 @@ class PinVerificationScreen extends StatefulWidget {
     this.subtitle = 'Please enter your 6-digit PIN to continue',
     required this.onPinVerified,
     this.onCancel,
+    this.showBiometric = false,
+    this.onBiometricPressed,
   });
 
   @override
@@ -23,9 +27,9 @@ class PinVerificationScreen extends StatefulWidget {
 
 class _PinVerificationScreenState extends State<PinVerificationScreen>
     with TickerProviderStateMixin {
-  final SecurityService _securityService = SecurityService();
   final List<TextEditingController> _pinControllers = List.generate(6, (index) => TextEditingController());
   final List<FocusNode> _pinFocusNodes = List.generate(6, (index) => FocusNode());
+  final SecurityService _securityService = SecurityService();
   
   bool _isLoading = false;
   String _errorMessage = '';
@@ -157,7 +161,8 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: AppTheme.textPrimary,
-        leading: widget.onCancel != null 
+        centerTitle: true,
+        leading: widget.onCancel != null
             ? IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
@@ -168,157 +173,174 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
             : null,
       ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const SizedBox(height: 40),
-              
-              // Security icon with animation
-              TweenAnimationBuilder<double>(
-                duration: const Duration(milliseconds: 800),
-                tween: Tween(begin: 0.0, end: 1.0),
-                builder: (context, scale, child) {
-                  return Transform.scale(
-                    scale: scale,
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Icon(
-                        Icons.lock_outline,
-                        size: 40,
-                        color: AppTheme.primaryColor,
-                      ),
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Security icon
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withOpacity(0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Title and description
-              Text(
-                widget.title,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              Text(
-                widget.subtitle,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppTheme.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              
-              const SizedBox(height: 48),
-              
-              // PIN input fields with shake animation
-              AnimatedBuilder(
-                animation: _shakeAnimation,
-                builder: (context, child) {
-                  return Transform.translate(
-                    offset: Offset(_shakeAnimation.value * 10, 0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(6, (index) => _buildPinField(index)),
+                    child: Icon(
+                      Icons.lock_outline,
+                      size: 40,
+                      color: AppTheme.primaryColor,
                     ),
-                  );
-                },
-              ),
-              
-              if (_errorMessage.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppTheme.errorColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        color: AppTheme.errorColor,
-                        size: 20,
+
+                  const SizedBox(height: 32),
+
+                  // Title and description
+                  Text(
+                    widget.title,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Text(
+                    widget.subtitle,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppTheme.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+
+                  const SizedBox(height: 48),
+
+                  // PIN input fields with shake animation - Make responsive
+                  AnimatedBuilder(
+                    animation: _shakeAnimation,
+                    builder: (context, child) {
+                      return Transform.translate(
+                        offset: Offset(_shakeAnimation.value * 10, 0),
+                        child: LayoutBuilder(
+                          builder: (context, constraints) {
+                            // Calculate field width based on available space
+                            double maxWidth = constraints.maxWidth;
+                            double totalSpacing = 5 * 8.0; // 5 gaps of 8 pixels each
+                            double availableWidth = maxWidth - totalSpacing - 32; // 32 for padding
+                            double fieldWidth = (availableWidth / 6).clamp(40.0, 60.0);
+                            
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: List.generate(6, (index) => 
+                                _buildPinField(index, fieldWidth)
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+
+                  if (_errorMessage.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.errorColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          _errorMessage,
-                          style: TextStyle(
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_outline,
                             color: AppTheme.errorColor,
-                            fontSize: 14,
+                            size: 20,
                           ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _errorMessage,
+                              style: TextStyle(
+                                color: AppTheme.errorColor,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // Attempt counter
+                  if (_attemptCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Attempts remaining: ${3 - _attemptCount}',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              ],
-              
-              const SizedBox(height: 24),
-              
-              // Attempt counter
-              if (_attemptCount > 0)
-                Text(
-                  'Attempts remaining: ${3 - _attemptCount}',
-                  style: TextStyle(
-                    color: AppTheme.textMuted,
-                    fontSize: 12,
-                  ),
-                ),
-              
-              const Spacer(),
-              
-              // Loading indicator
-              if (_isLoading)
-                const CircularProgressIndicator(),
-              
-              const SizedBox(height: 24),
-              
-              // Biometric option (placeholder)
-              TextButton.icon(
-                onPressed: () {
-                  // TODO: Implement biometric authentication
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Biometric authentication coming soon!'),
-                      backgroundColor: AppTheme.warningColor,
                     ),
-                  );
-                },
-                icon: const Icon(Icons.fingerprint),
-                label: const Text('Use Biometric'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppTheme.primaryColor,
-                ),
+
+                  const SizedBox(height: 32),
+
+                  // Loading indicator
+                  if (_isLoading)
+                    CircularProgressIndicator(
+                      color: AppTheme.primaryColor,
+                    ),
+
+                  // Biometric button
+                  if (widget.showBiometric && widget.onBiometricPressed != null) ...[
+                    const SizedBox(height: 32),
+                    TextButton.icon(
+                      onPressed: widget.onBiometricPressed,
+                      icon: Icon(Icons.fingerprint, color: AppTheme.primaryColor),
+                      label: Text(
+                        'Use Biometric',
+                        style: TextStyle(color: AppTheme.primaryColor),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPinField(int index) {
+  Widget _buildPinField(int index, [double? width]) {
     bool hasValue = _pinControllers[index].text.isNotEmpty;
     bool hasError = _errorMessage.isNotEmpty;
+    double fieldWidth = width ?? 50;
     
     return Container(
-      width: 50,
+      width: fieldWidth,
       height: 60,
       decoration: BoxDecoration(
         border: Border.all(
@@ -337,7 +359,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
         focusNode: _pinFocusNodes[index],
         textAlign: TextAlign.center,
         style: TextStyle(
-          fontSize: 24,
+          fontSize: fieldWidth > 45 ? 24 : 20, // Adjust font size based on field width
           fontWeight: FontWeight.bold,
           color: AppTheme.textPrimary,
         ),
@@ -348,8 +370,15 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
         decoration: const InputDecoration(
           counterText: '',
           border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
         ),
         onChanged: (value) => _onPinChanged(index, value),
+        onTap: () {
+          // Ensure cursor is at the end and prevent selection issues
+          _pinControllers[index].selection = TextSelection.fromPosition(
+            TextPosition(offset: _pinControllers[index].text.length),
+          );
+        },
       ),
     );
   }
