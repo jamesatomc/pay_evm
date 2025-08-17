@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/wallet_service.dart';
+import 'WalletScreen.dart';
 
 
 class CreateWalletScreen extends StatefulWidget {
-  const CreateWalletScreen({super.key});
+  final int initialTab;
+  
+  const CreateWalletScreen({super.key, this.initialTab = 0});
 
   @override
   State<CreateWalletScreen> createState() => _CreateWalletScreenState();
@@ -25,6 +28,8 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _selectedTab = widget.initialTab; // Set initial tab
+    _tabController.index = widget.initialTab; // Set tab controller index
     _mnemonicController.addListener(_updateMnemonicWordCount);
   }
 
@@ -55,12 +60,17 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
     setState(() => _isLoading = true);
 
     try {
-      final wallet = await _walletService.createNewWallet(
+      await _walletService.createNewWallet(
         _nameController.text.trim(),
         wordCount: _selectedMnemonicLength,
       );
       if (mounted) {
-        Navigator.pop(context, wallet);
+        // Navigate to wallet screen and clear navigation stack
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const WalletScreen()),
+          (route) => false,
+        );
         _showSuccess('Wallet created successfully with $_selectedMnemonicLength-word mnemonic!');
       }
     } catch (e) {
@@ -102,12 +112,16 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
     setState(() => _isLoading = true);
 
     try {
-      final wallet = await _walletService.importWalletFromMnemonic(
+      await _walletService.importWalletFromMnemonic(
         cleanMnemonic, // Use cleaned mnemonic
         _nameController.text.trim(),
       );
       if (mounted) {
-        Navigator.pop(context, wallet);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const WalletScreen()),
+          (route) => false,
+        );
         _showSuccess('Wallet imported successfully with ${filteredWords.length}-word mnemonic!');
       }
     } catch (e) {
@@ -137,12 +151,16 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
     setState(() => _isLoading = true);
 
     try {
-      final wallet = await _walletService.importWalletFromPrivateKey(
+      await _walletService.importWalletFromPrivateKey(
         _privateKeyController.text.trim(),
         _nameController.text.trim(),
       );
       if (mounted) {
-        Navigator.pop(context, wallet);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const WalletScreen()),
+          (route) => false,
+        );
         _showSuccess('Wallet imported successfully!');
       }
     } catch (e) {

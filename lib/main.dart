@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pay_evm/screenpage/WelcomeScreen.dart';
 import 'package:pay_evm/screenpage/WalletScreen.dart';
 import 'package:pay_evm/utils/app_theme.dart';
+import 'package:pay_evm/services/wallet_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,8 +17,131 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Kanari Wallet',
       theme: AppTheme.lightTheme,
-      home: const WalletScreen(),
+      home: const AppInitializer(),
     );
+  }
+}
+
+class AppInitializer extends StatefulWidget {
+  const AppInitializer({super.key});
+
+  @override
+  State<AppInitializer> createState() => _AppInitializerState();
+}
+
+class _AppInitializerState extends State<AppInitializer> {
+  final WalletService _walletService = WalletService();
+  bool _isLoading = true;
+  bool _hasWallet = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkWalletExists();
+  }
+
+  Future<void> _checkWalletExists() async {
+    try {
+      // Add minimum loading time for better UX
+      await Future.delayed(const Duration(milliseconds: 1500));
+      
+      final wallet = await _walletService.getActiveWallet();
+      setState(() {
+        _hasWallet = wallet != null;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _hasWallet = false;
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF667eea),
+                Color(0xFF764ba2),
+              ],
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // App Logo with pulse animation
+                TweenAnimationBuilder<double>(
+                  duration: const Duration(milliseconds: 1500),
+                  tween: Tween(begin: 0.8, end: 1.0),
+                  builder: (context, scale, child) {
+                    return Transform.scale(
+                      scale: scale,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 30,
+                              offset: const Offset(0, 15),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_wallet,
+                          size: 60,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+                const Text(
+                  'Kanari Wallet',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 48),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return _hasWallet ? const WalletScreen() : const WelcomeScreen();
+  }
+
+  @override
+  void dispose() {
+    _walletService.dispose();
+    super.dispose();
   }
 }
 
