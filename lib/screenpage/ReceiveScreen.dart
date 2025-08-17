@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/wallet_model.dart';
+import '../utils/app_theme.dart';
 
 class ReceiveScreen extends StatelessWidget {
   final WalletModel wallet;
@@ -82,7 +83,7 @@ class ReceiveScreen extends StatelessWidget {
                           'Address',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
+                            color: Theme.of(context).textTheme.titleMedium?.color,
                           ),
                         ),
                       ],
@@ -102,7 +103,7 @@ class ReceiveScreen extends StatelessWidget {
                           'Wallet Address',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
+                            color: Theme.of(context).textTheme.titleMedium?.color,
                           ),
                         ),
                       ],
@@ -112,9 +113,13 @@ class ReceiveScreen extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: Theme.of(context).cardColor,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppTheme.darkTextMuted.withOpacity(0.3)
+                              : AppTheme.lightTextMuted,
+                        ),
                       ),
                       child: Text(
                         wallet.address,

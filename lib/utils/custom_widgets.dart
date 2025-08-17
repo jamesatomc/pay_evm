@@ -252,7 +252,7 @@ class AssetListItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: AppTheme.spacingXS),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
         boxShadow: AppTheme.cardShadow,
       ),
@@ -346,7 +346,7 @@ class ActionButton extends StatelessWidget {
       child: Container(
         height: 60,
         decoration: BoxDecoration(
-          color: backgroundColor ?? Colors.white,
+          color: backgroundColor ?? Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
           boxShadow: AppTheme.cardShadow,
         ),

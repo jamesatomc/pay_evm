@@ -204,7 +204,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
               // Title and description
               Text(
                 widget.title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
@@ -336,7 +336,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
         controller: _pinControllers[index],
         focusNode: _pinFocusNodes[index],
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppTheme.textPrimary,

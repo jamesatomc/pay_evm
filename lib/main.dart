@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:pay_evm/screenpage/WelcomeScreen.dart';
 import 'package:pay_evm/screenpage/WalletScreen.dart';
 import 'package:pay_evm/screenpage/SecuritySetupScreen.dart';
 import 'package:pay_evm/utils/app_theme.dart';
 import 'package:pay_evm/services/wallet_service.dart';
 import 'package:pay_evm/services/security_service.dart';
+import 'package:pay_evm/providers/theme_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,11 +17,20 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Kanari Wallet',
-      theme: AppTheme.lightTheme,
-      home: const AppInitializer(),
+    return ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Kanari Wallet',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            home: const AppInitializer(),
+          );
+        },
+      ),
     );
   }
 }

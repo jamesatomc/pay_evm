@@ -14,6 +14,7 @@ import 'SendScreen.dart';
 import 'ReceiveScreen.dart';
 import 'NetworkSelectionScreen.dart';
 import 'AddTokenScreen.dart';
+import 'SettingsScreen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -190,6 +191,13 @@ class WalletScreenState extends State<WalletScreen> {
     }
   }
 
+  void _openSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+    );
+  }
+
   void _copyAddress() {
     if (_currentWallet != null) {
       Clipboard.setData(ClipboardData(text: _currentWallet!.address));
@@ -327,21 +335,50 @@ class WalletScreenState extends State<WalletScreen> {
               )
             : null,
         actions: [
-          IconButton(
+          PopupMenuButton<String>(
             icon: Icon(
               Icons.account_balance_wallet_outlined,
               color: AppTheme.textPrimary,
             ),
-            onPressed: _currentWallet != null ? _openWalletList : _openCreateWallet,
             tooltip: 'Wallets',
+            onSelected: (value) {
+              if (value == 'list') {
+                _openWalletList();
+              } else if (value == 'create') {
+                _openCreateWallet();
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              if (_currentWallet != null)
+                PopupMenuItem<String>(
+                  value: 'list',
+                  child: Row(
+                    children: [
+                      Icon(Icons.list, color: AppTheme.textPrimary),
+                      const SizedBox(width: 8),
+                      const Text('My Wallets'),
+                    ],
+                  ),
+                ),
+              PopupMenuItem<String>(
+                value: 'create',
+                child: Row(
+                  children: [
+                    Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
+                    const SizedBox(width: 8),
+                    const Text('Create Wallet'),
+                  ],
+                ),
+              ),
+            ],
           ),
           IconButton(
             icon: Icon(
-              Icons.add_circle_outline,
-              color: AppTheme.primaryColor,
+              Icons.settings_outlined,
+              color: AppTheme.textPrimary,
             ),
-            onPressed: _openCreateWallet,
-            tooltip: 'Create Wallet',
+            onPressed: _openSettings,
+            tooltip: 'Settings',
           ),
           const SizedBox(width: AppTheme.spacingS),
         ],
@@ -523,7 +560,7 @@ class WalletScreenState extends State<WalletScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).scaffoldBackgroundColor,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(AppTheme.borderRadiusLarge),
             topRight: Radius.circular(AppTheme.borderRadiusLarge),

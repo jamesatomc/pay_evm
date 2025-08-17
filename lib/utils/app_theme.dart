@@ -8,14 +8,49 @@ class AppTheme {
   static const Color successColor = Color(0xFF10B981); // Success green (alias)
   static const Color errorColor = Color(0xFFEF4444);
   static const Color warningColor = Color(0xFFF59E0B);
-  static const Color surfaceColor = Color(0xFFF8FAFC);
-  static const Color backgroundColor = Color(0xFFFFFFFF);
-  static const Color cardColor = Color(0xFFFFFFFF);
   
-  // Text colors
-  static const Color textPrimary = Color(0xFF1F2937);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textMuted = Color(0xFF9CA3AF);
+  // Light Theme Colors
+  static const Color lightSurfaceColor = Color(0xFFF8FAFC);
+  static const Color lightBackgroundColor = Color(0xFFFFFFFF);
+  static const Color lightCardColor = Color(0xFFFFFFFF);
+  static const Color lightTextPrimary = Color(0xFF1F2937);
+  static const Color lightTextSecondary = Color(0xFF6B7280);
+  static const Color lightTextMuted = Color(0xFF9CA3AF);
+  
+  // Dark Theme Colors
+  static const Color darkSurfaceColor = Color(0xFF111827);
+  static const Color darkBackgroundColor = Color(0xFF1F2937);
+  static const Color darkCardColor = Color(0xFF374151);
+  static const Color darkTextPrimary = Color(0xFFF9FAFB);
+  static const Color darkTextSecondary = Color(0xFFE5E7EB); // เพิ่มความชัด
+  static const Color darkTextMuted = Color(0xFFD1D5DB); // เพิ่มความชัด
+  
+  // Dynamic colors based on theme mode
+  static Color surfaceColor = lightSurfaceColor;
+  static Color backgroundColor = lightBackgroundColor;
+  static Color cardColor = lightCardColor;
+  static Color textPrimary = lightTextPrimary;
+  static Color textSecondary = lightTextSecondary;
+  static Color textMuted = lightTextMuted;
+  
+  // Method to update theme colors based on brightness
+  static void updateThemeColors(bool isDark) {
+    if (isDark) {
+      surfaceColor = darkSurfaceColor;
+      backgroundColor = darkBackgroundColor;
+      cardColor = darkCardColor;
+      textPrimary = darkTextPrimary;
+      textSecondary = darkTextSecondary;
+      textMuted = darkTextMuted;
+    } else {
+      surfaceColor = lightSurfaceColor;
+      backgroundColor = lightBackgroundColor;
+      cardColor = lightCardColor;
+      textPrimary = lightTextPrimary;
+      textSecondary = lightTextSecondary;
+      textMuted = lightTextMuted;
+    }
+  }
   
   // Gradient colors
   static const LinearGradient primaryGradient = LinearGradient(
@@ -62,7 +97,7 @@ class AppTheme {
   ];
 
   // Theme data
-  static ThemeData get lightTheme => ThemeData(
+  static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     colorScheme: ColorScheme.fromSeed(
       seedColor: primaryColor,
@@ -70,25 +105,25 @@ class AppTheme {
       primary: primaryColor,
       secondary: secondaryColor,
       error: errorColor,
-      surface: surfaceColor,
-      background: backgroundColor,
+      surface: lightSurfaceColor,
+      background: lightBackgroundColor,
     ),
-    scaffoldBackgroundColor: surfaceColor,
+    scaffoldBackgroundColor: lightSurfaceColor,
     cardTheme: CardThemeData(
-      color: cardColor,
+      color: lightCardColor,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(borderRadiusMedium),
       ),
       shadowColor: Colors.black.withOpacity(0.05),
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: backgroundColor,
-      foregroundColor: textPrimary,
+    appBarTheme: AppBarTheme(
+      backgroundColor: lightBackgroundColor,
+      foregroundColor: lightTextPrimary,
       elevation: 0,
       centerTitle: true,
       titleTextStyle: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
@@ -124,7 +159,7 @@ class AppTheme {
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: backgroundColor,
+      fillColor: lightBackgroundColor,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(borderRadiusMedium),
         borderSide: BorderSide(color: Colors.grey.shade300),
@@ -143,54 +178,189 @@ class AppTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: spacingM, vertical: spacingM),
     ),
-    textTheme: const TextTheme(
+    textTheme: TextTheme(
       headlineLarge: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
         fontSize: 32,
         fontWeight: FontWeight.bold,
       ),
       headlineMedium: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
         fontSize: 28,
         fontWeight: FontWeight.bold,
       ),
       headlineSmall: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
         fontSize: 24,
         fontWeight: FontWeight.w600,
       ),
       titleLarge: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
         fontSize: 20,
         fontWeight: FontWeight.w600,
       ),
       titleMedium: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
         fontSize: 18,
         fontWeight: FontWeight.w600,
       ),
       titleSmall: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
         fontSize: 16,
         fontWeight: FontWeight.w600,
       ),
       bodyLarge: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
         fontSize: 16,
         fontWeight: FontWeight.normal,
       ),
       bodyMedium: TextStyle(
-        color: textSecondary,
+        color: lightTextSecondary,
         fontSize: 14,
         fontWeight: FontWeight.normal,
       ),
       bodySmall: TextStyle(
-        color: textMuted,
+        color: lightTextMuted,
         fontSize: 12,
         fontWeight: FontWeight.normal,
       ),
       labelLarge: TextStyle(
-        color: textPrimary,
+        color: lightTextPrimary,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+  );
+
+  static ThemeData darkTheme = ThemeData(
+    useMaterial3: true,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: primaryColor,
+      brightness: Brightness.dark,
+      primary: primaryColor,
+      secondary: secondaryColor,
+      error: errorColor,
+      surface: darkSurfaceColor,
+      background: darkBackgroundColor,
+    ),
+    scaffoldBackgroundColor: darkSurfaceColor,
+    cardTheme: CardThemeData(
+      color: darkCardColor,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(borderRadiusMedium),
+      ),
+      shadowColor: Colors.black.withOpacity(0.3),
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: darkBackgroundColor,
+      foregroundColor: darkTextPrimary,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        color: darkTextPrimary,
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadiusMedium),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: spacingL, vertical: spacingM),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: primaryColor,
+        side: const BorderSide(color: primaryColor),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(borderRadiusMedium),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: spacingL, vertical: spacingM),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: darkBackgroundColor,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadiusMedium),
+        borderSide: BorderSide(color: Colors.grey.shade600),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadiusMedium),
+        borderSide: BorderSide(color: Colors.grey.shade600),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadiusMedium),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(borderRadiusMedium),
+        borderSide: const BorderSide(color: errorColor),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: spacingM, vertical: spacingM),
+    ),
+    textTheme: TextTheme(
+      headlineLarge: TextStyle(
+        color: darkTextPrimary,
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineMedium: TextStyle(
+        color: darkTextPrimary,
+        fontSize: 28,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineSmall: TextStyle(
+        color: darkTextPrimary,
+        fontSize: 24,
+        fontWeight: FontWeight.w600,
+      ),
+      titleLarge: TextStyle(
+        color: darkTextPrimary,
+        fontSize: 20,
+        fontWeight: FontWeight.w600,
+      ),
+      titleMedium: TextStyle(
+        color: darkTextPrimary,
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+      ),
+      titleSmall: TextStyle(
+        color: darkTextPrimary,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+      ),
+      bodyLarge: TextStyle(
+        color: darkTextPrimary,
+        fontSize: 16,
+        fontWeight: FontWeight.normal,
+      ),
+      bodyMedium: TextStyle(
+        color: darkTextSecondary,
+        fontSize: 14,
+        fontWeight: FontWeight.normal,
+      ),
+      bodySmall: TextStyle(
+        color: darkTextMuted,
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+      ),
+      labelLarge: TextStyle(
+        color: darkTextPrimary,
         fontSize: 14,
         fontWeight: FontWeight.w600,
       ),

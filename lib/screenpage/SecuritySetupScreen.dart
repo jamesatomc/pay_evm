@@ -163,7 +163,7 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
               // Title and description
               Text(
                 !_isConfirmStep ? 'Create Your 6-Digit PIN' : 'Confirm Your PIN',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
@@ -247,7 +247,7 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
                           size: 20,
                         ),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           'Security Tips',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
@@ -257,7 +257,7 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       '• Use a unique PIN that you can remember\n'
                       '• Do not share your PIN with anyone\n'
                       '• This PIN secures your wallet transactions',
@@ -293,7 +293,7 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
         controller: _pinControllers[index],
         focusNode: _pinFocusNodes[index],
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppTheme.textPrimary,
