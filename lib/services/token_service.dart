@@ -461,63 +461,6 @@ class TokenService {
     }
   }
 
-  // Search for popular tokens (this could be enhanced with a token list API)
-  Future<List<CustomTokenModel>> searchPopularTokens(String networkId, String query) async {
-    // This would normally fetch from a token list API like Uniswap's token list
-    // For now, return some popular tokens based on network
-    
-    final popularTokens = <CustomTokenModel>[];
-    
-    if (networkId == 'ethereum' || networkId == 'sepolia') {
-      popularTokens.addAll([
-        CustomTokenModel(
-          contractAddress: '0xA0b86a33E6441b7c946D5b7Bd3E6DE1b8e0C7a9a',
-          name: 'USD Coin',
-          symbol: 'USDC',
-          decimals: 6,
-          networkId: networkId,
-          iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
-        ),
-        CustomTokenModel(
-          contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-          name: 'Tether USD',
-          symbol: 'USDT',
-          decimals: 6,
-          networkId: networkId,
-          iconUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png',
-        ),
-      ]);
-    } else if (networkId == 'bsc' || networkId == 'bsc-testnet') {
-      popularTokens.addAll([
-        CustomTokenModel(
-          contractAddress: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
-          name: 'USD Coin',
-          symbol: 'USDC',
-          decimals: 18,
-          networkId: networkId,
-          iconUrl: 'https://cryptologos.cc/logos/usd-coin-usdc-logo.png',
-        ),
-        CustomTokenModel(
-          contractAddress: '0x55d398326f99059fF775485246999027B3197955',
-          name: 'Tether USD',
-          symbol: 'USDT',
-          decimals: 18,
-          networkId: networkId,
-          iconUrl: 'https://cryptologos.cc/logos/tether-usdt-logo.png',
-        ),
-      ]);
-    }
-    
-    // Filter by query if provided
-    if (query.isNotEmpty) {
-      return popularTokens.where((token) =>
-          token.name.toLowerCase().contains(query.toLowerCase()) ||
-          token.symbol.toLowerCase().contains(query.toLowerCase())).toList();
-    }
-    
-    return popularTokens;
-  }
-
   // Validate contract address format
   bool isValidContractAddress(String address) {
     // Basic Ethereum address validation

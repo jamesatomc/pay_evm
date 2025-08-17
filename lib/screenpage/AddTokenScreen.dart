@@ -19,9 +19,7 @@ class AddTokenScreen extends StatefulWidget {
 class _AddTokenScreenState extends State<AddTokenScreen>
     with TickerProviderStateMixin {
   final TokenService _tokenService = TokenService();
-  late TabController _tabController;
   late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
 
   // Controllers for custom token form
   final TextEditingController _addressController = TextEditingController();
@@ -31,31 +29,18 @@ class _AddTokenScreenState extends State<AddTokenScreen>
     text: '18',
   );
 
-  // Search controller for popular tokens
-  final TextEditingController _searchController = TextEditingController();
-
   bool _isLoading = false;
   bool _isValidating = false;
   bool _showScanner = false;
-  List<CustomTokenModel> _popularTokens = [];
-  List<CustomTokenModel> _filteredTokens = [];
   String? _validationError;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
-
-    _loadPopularTokens();
-    _searchController.addListener(_onSearchChanged);
 
     // Add listeners to form fields to update state when they change
     _nameController.addListener(() => setState(() {}));
@@ -71,41 +56,8 @@ class _AddTokenScreenState extends State<AddTokenScreen>
     _nameController.dispose();
     _symbolController.dispose();
     _decimalsController.dispose();
-    _searchController.dispose();
-    _tabController.dispose();
     _fadeController.dispose();
     super.dispose();
-  }
-
-  Future<void> _loadPopularTokens() async {
-    setState(() => _isLoading = true);
-    try {
-      final tokens = await _tokenService.searchPopularTokens(
-        widget.network.id,
-        '',
-      );
-      setState(() {
-        _popularTokens = tokens;
-        _filteredTokens = tokens;
-      });
-    } catch (e) {
-      print('Error loading popular tokens: $e');
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  void _onSearchChanged() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredTokens = _popularTokens
-          .where(
-            (token) =>
-                token.name.toLowerCase().contains(query) ||
-                token.symbol.toLowerCase().contains(query),
-          )
-          .toList();
-    });
   }
 
   bool _canAddToken() {
@@ -249,26 +201,6 @@ class _AddTokenScreenState extends State<AddTokenScreen>
     }
   }
 
-  Future<void> _addPopularToken(CustomTokenModel token) async {
-    setState(() => _isLoading = true);
-
-    try {
-      final success = await _tokenService.addCustomToken(token);
-      if (success) {
-        if (mounted) {
-          Navigator.pop(context, token);
-          _showSuccess('${token.symbol} added successfully!');
-        }
-      } else {
-        _showError('Failed to add ${token.symbol}. It may already exist.');
-      }
-    } catch (e) {
-      _showError('Error adding ${token.symbol}: $e');
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -352,7 +284,7 @@ class _AddTokenScreenState extends State<AddTokenScreen>
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Add Token'),
+            const Text('Add Custom Token'),
             Text(
               widget.network.name,
               style: TextStyle(
@@ -366,78 +298,168 @@ class _AddTokenScreenState extends State<AddTokenScreen>
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Modern Tab Bar
-            Container(
-              margin: const EdgeInsets.all(AppTheme.spacingM),
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
-                boxShadow: AppTheme.elevatedShadow,
-              ),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: AppTheme.primaryColor,
-                  borderRadius: BorderRadius.circular(
-                    AppTheme.borderRadiusMedium,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+            // Security Notice Card (เหมือน Warning Card ใน SendScreen)
+            Card(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.warningColor.withOpacity(0.15)
+                  : AppTheme.warningColor.withOpacity(0.1),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.security, color: AppTheme.warningColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Only add tokens from trusted sources. Verify contract addresses carefully. Same contract can exist on different networks.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                labelColor: Colors.white,
-                unselectedLabelColor: AppTheme.textSecondary,
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 14,
-                ),
-                tabs: const [
-                  Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.star_outline, size: 18),
-                        SizedBox(width: 8),
-                        Text('Popular'),
-                      ],
-                    ),
-                  ),
-                  Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.add_circle_outline, size: 18),
-                        SizedBox(width: 8),
-                        Text('Custom'),
-                      ],
-                    ),
-                  ),
-                ],
               ),
             ),
 
-            // Tab Content
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [_buildPopularTokensTab(), _buildCustomTokenTab()],
+            const SizedBox(height: 24),
+
+            // Token Contract Address
+            TextField(
+              controller: _addressController,
+              decoration: InputDecoration(
+                labelText: 'Token Contract Address',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.link),
+                suffixIcon: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.content_paste),
+                      onPressed: () async {
+                        final data = await Clipboard.getData('text/plain');
+                        if (data?.text != null) {
+                          _addressController.text = data!.text!;
+                          _validateTokenAddress();
+                        }
+                      },
+                      tooltip: 'Paste',
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.qr_code_scanner),
+                      onPressed: _scanQRCode,
+                      tooltip: 'Scan QR',
+                    ),
+                  ],
+                ),
+                helperText: _validationError != null
+                    ? _validationError
+                    : (_addressController.text.trim().isNotEmpty
+                        ? '✓ Valid contract address'
+                        : 'Enter ERC-20 token contract address'),
+                helperStyle: TextStyle(
+                  color: _validationError != null
+                      ? AppTheme.errorColor
+                      : (_addressController.text.trim().isNotEmpty
+                          ? AppTheme.successColor
+                          : AppTheme.textSecondary),
+                ),
+              ),
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+              onChanged: (_) => _validateTokenAddress(),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Token Name
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Token Name',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.label_outline),
+                hintText: 'e.g., USD Coin',
               ),
             ),
+
+            const SizedBox(height: 16),
+
+            // Symbol
+            TextField(
+              controller: _symbolController,
+              decoration: InputDecoration(
+                labelText: 'Symbol',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.code),
+                hintText: 'USDC',
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+
+            const SizedBox(height: 16),
+
+            // Decimals
+            TextField(
+              controller: _decimalsController,
+              decoration: InputDecoration(
+                labelText: 'Decimals',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.precision_manufacturing),
+                helperText: 'Usually 18 for most ERC-20 tokens',
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            ),
+
+            const SizedBox(height: 24),
+
+            // Warning (เหมือน SendScreen)
+            Card(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.warningColor.withOpacity(0.15)
+                  : AppTheme.warningColor.withOpacity(0.1),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning, color: AppTheme.warningColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Please check the contract address and token details carefully. Once added, it cannot be undone.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Add Button
+            CustomButton(
+              text: 'Add Token to ${widget.network.name}',
+              onPressed: _canAddToken() ? _addCustomToken : null,
+              isLoading: _isLoading,
+              icon: Icons.add_circle_outline,
+              backgroundColor: AppTheme.primaryColor,
+            ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -484,535 +506,5 @@ class _AddTokenScreenState extends State<AddTokenScreen>
     );
   }
 
-  Widget _buildPopularTokensTab() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
-      child: Column(
-        children: [
-          // Search Bar with modern styling
-          Container(
-            margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
-              boxShadow: AppTheme.cardShadow,
-            ),
-            child: TextFormField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search tokens by name or symbol...',
-                hintStyle: TextStyle(color: AppTheme.textMuted),
-                prefixIcon: Icon(Icons.search, color: AppTheme.primaryColor),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.all(AppTheme.spacingL),
-              ),
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
 
-          // Token List
-          Expanded(
-            child: _isLoading
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: AppTheme.primaryColor),
-                        const SizedBox(height: AppTheme.spacingM),
-                        Text(
-                          'Loading popular tokens...',
-                          style: TextStyle(color: AppTheme.textSecondary),
-                        ),
-                      ],
-                    ),
-                  )
-                : _filteredTokens.isEmpty
-                ? const EmptyState(
-                    title: 'No Tokens Found',
-                    subtitle: 'Try adjusting your search or add a custom token',
-                    icon: Icons.search_off,
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: AppTheme.spacingXL),
-                    itemCount: _filteredTokens.length,
-                    itemBuilder: (context, index) {
-                      final token = _filteredTokens[index];
-                      return Container(
-                        margin: const EdgeInsets.only(
-                          bottom: AppTheme.spacingM,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.borderRadiusLarge,
-                          ),
-                          boxShadow: AppTheme.cardShadow,
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(
-                            AppTheme.spacingL,
-                          ),
-                          leading: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: AppTheme.surfaceColor,
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.borderRadiusMedium,
-                              ),
-                              border: Border.all(
-                                color: AppTheme.primaryColor.withOpacity(0.1),
-                              ),
-                            ),
-                            child: token.iconUrl != null
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(
-                                      AppTheme.borderRadiusMedium,
-                                    ),
-                                    child: Image.network(
-                                      token.iconUrl!,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) => Icon(
-                                            Icons.token,
-                                            color: AppTheme.primaryColor,
-                                          ),
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.token,
-                                    color: AppTheme.primaryColor,
-                                  ),
-                          ),
-                          title: Text(
-                            token.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              token.symbol,
-                              style: TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          trailing: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(
-                                AppTheme.borderRadiusSmall,
-                              ),
-                            ),
-                            child: ElevatedButton(
-                              onPressed: () => _addPopularToken(token),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryColor,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: AppTheme.spacingL,
-                                  vertical: AppTheme.spacingM,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppTheme.borderRadiusSmall,
-                                  ),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: const Text(
-                                'Add',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCustomTokenTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppTheme.spacingM),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Warning Card with better styling
-          Container(
-            padding: const EdgeInsets.all(AppTheme.spacingL),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.warningColor.withOpacity(0.1),
-                  AppTheme.warningColor.withOpacity(0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
-              border: Border.all(
-                color: AppTheme.warningColor.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.warningColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadiusSmall,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.security,
-                        color: AppTheme.warningColor,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: AppTheme.spacingM),
-                    Expanded(
-                      child: Text(
-                        'Security Notice',
-                        style: TextStyle(
-                          color: AppTheme.warningColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppTheme.spacingM),
-                Text(
-                  '• Only add tokens from trusted sources\n'
-                  '• Verify contract addresses carefully\n'
-                  '• Same contract can exist on different networks',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: AppTheme.spacingXL),
-
-          // Form Fields with modern styling
-          _buildFormField(
-            title: 'Token Contract Address',
-            child: TextFormField(
-              controller: _addressController,
-              decoration: InputDecoration(
-                hintText: '0x742d35Cc6265C0532c8b61F4b4F3...'.toLowerCase(),
-                hintStyle: TextStyle(
-                  color: AppTheme.textMuted,
-                  fontFamily: 'monospace',
-                ),
-                prefixIcon: Container(
-                  margin: const EdgeInsets.all(12),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.link,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ),
-                suffixIcon: _isValidating
-                    ? const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : _addressController.text.trim().isNotEmpty &&
-                          _validationError == null
-                    ? Icon(Icons.check_circle, color: AppTheme.successColor)
-                    : Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.content_paste),
-                            onPressed: () async {
-                              final data = await Clipboard.getData(
-                                'text/plain',
-                              );
-                              if (data?.text != null) {
-                                _addressController.text = data!.text!;
-                                _validateTokenAddress();
-                              }
-                            },
-                            tooltip: 'Paste',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.qr_code_scanner),
-                            onPressed: _scanQRCode,
-                            tooltip: 'Scan QR',
-                          ),
-                        ],
-                      ),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(
-                    AppTheme.borderRadiusMedium,
-                  ),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(
-                    AppTheme.borderRadiusMedium,
-                  ),
-                  borderSide: BorderSide(
-                    color: _validationError != null
-                        ? AppTheme.errorColor.withOpacity(0.3)
-                        : _addressController.text.trim().isNotEmpty &&
-                              _validationError == null
-                        ? AppTheme.successColor.withOpacity(0.3)
-                        : AppTheme.primaryColor.withOpacity(0.1),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(
-                    AppTheme.borderRadiusMedium,
-                  ),
-                  borderSide: BorderSide(
-                    color: AppTheme.primaryColor,
-                    width: 2,
-                  ),
-                ),
-                errorText: _validationError,
-                helperText:
-                    _addressController.text.trim().isNotEmpty &&
-                        _validationError == null
-                    ? '✓ Valid contract address'
-                    : 'Enter ERC-20 token contract address',
-                helperStyle: TextStyle(
-                  color:
-                      _addressController.text.trim().isNotEmpty &&
-                          _validationError == null
-                      ? AppTheme.successColor
-                      : AppTheme.textSecondary,
-                ),
-              ),
-              onChanged: (_) => _validateTokenAddress(),
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
-            ),
-          ),
-
-          const SizedBox(height: AppTheme.spacingXL),
-
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: _buildFormField(
-                  title: 'Token Name',
-                  child: TextFormField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      hintText: 'e.g., USD Coin',
-                      prefixIcon: Container(
-                        margin: const EdgeInsets.all(12),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.label_outline,
-                          color: AppTheme.primaryColor,
-                          size: 20,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadiusMedium,
-                        ),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadiusMedium,
-                        ),
-                        borderSide: BorderSide(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadiusMedium,
-                        ),
-                        borderSide: BorderSide(
-                          color: AppTheme.primaryColor,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppTheme.spacingM),
-              Expanded(
-                child: _buildFormField(
-                  title: 'Symbol',
-                  child: TextFormField(
-                    controller: _symbolController,
-                    decoration: InputDecoration(
-                      hintText: 'USDC',
-                      prefixIcon: Container(
-                        margin: const EdgeInsets.all(12),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          Icons.code,
-                          color: AppTheme.primaryColor,
-                          size: 20,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadiusMedium,
-                        ),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadiusMedium,
-                        ),
-                        borderSide: BorderSide(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadiusMedium,
-                        ),
-                        borderSide: BorderSide(
-                          color: AppTheme.primaryColor,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    textCapitalization: TextCapitalization.characters,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: AppTheme.spacingXL),
-
-          _buildFormField(
-            title: 'Decimals',
-            child: TextFormField(
-              controller: _decimalsController,
-              decoration: InputDecoration(
-                hintText: '18',
-                prefixIcon: Container(
-                  margin: const EdgeInsets.all(12),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.precision_manufacturing,
-                    color: AppTheme.primaryColor,
-                    size: 20,
-                  ),
-                ),
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(
-                    AppTheme.borderRadiusMedium,
-                  ),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(
-                    AppTheme.borderRadiusMedium,
-                  ),
-                  borderSide: BorderSide(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(
-                    AppTheme.borderRadiusMedium,
-                  ),
-                  borderSide: BorderSide(
-                    color: AppTheme.primaryColor,
-                    width: 2,
-                  ),
-                ),
-                helperText: 'Usually 18 for most ERC-20 tokens',
-              ),
-              keyboardType: TextInputType.number,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            ),
-          ),
-
-          const SizedBox(height: AppTheme.spacingXXL),
-
-          // Add Button
-          CustomButton(
-            text: 'Add Token to ${widget.network.name}',
-            onPressed: _canAddToken() ? _addCustomToken : null,
-            isLoading: _isLoading,
-            icon: Icons.add_circle_outline,
-            backgroundColor: AppTheme.primaryColor,
-          ),
-
-          const SizedBox(height: AppTheme.spacingL),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFormField({required String title, required Widget child}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
-          ),
-        ),
-        const SizedBox(height: AppTheme.spacingS),
-        child,
-      ],
-    );
-  }
 }
