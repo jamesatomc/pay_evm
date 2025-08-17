@@ -41,6 +41,10 @@ class CustomButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           foregroundColor: textColor ?? AppTheme.primaryColor,
           side: BorderSide(color: backgroundColor ?? AppTheme.primaryColor),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+          ),
         ),
       );
     } else {
@@ -57,6 +61,12 @@ class CustomButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: backgroundColor ?? AppTheme.primaryColor,
           foregroundColor: textColor ?? Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+          ),
+          elevation: onPressed != null ? 2 : 0,
+          shadowColor: AppTheme.primaryColor.withOpacity(0.3),
         ),
       );
     }

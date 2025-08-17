@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pay_evm/utils/custom_widgets.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../models/wallet_model.dart';
 import '../utils/app_theme.dart';
@@ -140,19 +141,11 @@ class ReceiveScreen extends StatelessWidget {
             const SizedBox(height: 24),
             
             // Copy button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () => _copyAddress(context),
-                icon: const Icon(Icons.copy),
-                label: const Text('Copy Address'),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
+            CustomButton(
+              text: 'Copy Address',
+              onPressed: () => _copyAddress(context),
+              icon: Icons.copy,
+              backgroundColor: AppTheme.primaryColor,
             ),
             
             const SizedBox(height: 16),

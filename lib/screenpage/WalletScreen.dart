@@ -481,8 +481,14 @@ class WalletScreenState extends State<WalletScreen> {
           backgroundColor: Colors.white,
           iconColor: AppTheme.secondaryColor,
         ),
-
-
+        const SizedBox(width: AppTheme.spacingM),
+        ActionButton(
+          label: 'Buy',
+          icon: Icons.add_circle_outline,
+          onPressed: null, // TODO: Implement buy functionality
+          backgroundColor: Colors.white,
+          iconColor: AppTheme.primaryColor,
+        ),
       ],
     );
   }

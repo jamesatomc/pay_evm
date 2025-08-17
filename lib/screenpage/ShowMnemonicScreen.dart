@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pay_evm/utils/custom_widgets.dart';
 import '../models/wallet_model.dart';
 import '../utils/app_theme.dart';
+
 
 class ShowMnemonicScreen extends StatelessWidget {
   final WalletModel wallet;
@@ -158,34 +160,21 @@ class ShowMnemonicScreen extends StatelessWidget {
             const SizedBox(height: 24),
             
             // Copy button
-            SizedBox(
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: () => _copyMnemonic(context),
-                icon: const Icon(Icons.copy),
-                label: const Text('Copy Mnemonic'),
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
+            CustomButton(
+              text: 'Copy Mnemonic',
+              onPressed: () => _copyMnemonic(context),
+              icon: Icons.copy,
+              backgroundColor: AppTheme.primaryColor,
             ),
             
             const SizedBox(height: 12),
             
             // Done button
-            SizedBox(
-              height: 50,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('I have saved it'),
-              ),
+            CustomButton(
+              text: 'I have saved it',
+              onPressed: () => Navigator.pop(context),
+              isOutlined: true,
+              backgroundColor: AppTheme.primaryColor,
             ),
           ],
         ),
@@ -193,3 +182,4 @@ class ShowMnemonicScreen extends StatelessWidget {
     );
   }
 }
+

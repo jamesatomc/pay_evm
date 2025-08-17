@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:pay_evm/utils/custom_widgets.dart';
 import '../services/wallet_service.dart';
 import '../services/token_service.dart';
 import '../models/wallet_model.dart';
@@ -7,6 +8,7 @@ import '../models/network_model.dart';
 import '../models/token_model.dart';
 import '../utils/app_theme.dart';
 import 'PinVerificationScreen.dart';
+
 
 class SendScreen extends StatefulWidget {
   final WalletModel wallet;
@@ -464,19 +466,12 @@ class _SendScreenState extends State<SendScreen> {
             const Spacer(),
             
             // Send button
-            SizedBox(
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _sendTransaction,
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : Text('Send ${_selectedToken?.symbol ?? 'ETH'}'),
-              ),
+            CustomButton(
+              text: 'Send ${_selectedToken?.symbol ?? 'ETH'}',
+              onPressed: _isLoading ? null : _sendTransaction,
+              isLoading: _isLoading,
+              icon: Icons.send,
+              backgroundColor: AppTheme.primaryColor,
             ),
           ],
         ),

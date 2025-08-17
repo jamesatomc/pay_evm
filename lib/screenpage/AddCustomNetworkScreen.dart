@@ -1,8 +1,11 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pay_evm/utils/app_theme.dart';
+import 'package:pay_evm/utils/custom_widgets.dart';
 import '../services/network_service.dart';
 import '../models/network_model.dart';
+
 
 // eng
 // AddCustomNetworkScreen
@@ -440,13 +443,12 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   const SizedBox(height: 24),
                   
                   // Save Button
-                  ElevatedButton.icon(
+                  CustomButton(
+                    text: _isEditing ? 'Update Network' : 'Add Network',
                     onPressed: _isLoading ? null : _saveNetwork,
-                    icon: Icon(_isEditing ? Icons.update : Icons.add),
-                    label: Text(_isEditing ? 'Update Network' : 'Add Network'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                    ),
+                    isLoading: _isLoading,
+                    icon: _isEditing ? Icons.update : Icons.add,
+                    backgroundColor: AppTheme.primaryColor,
                   ),
                   
                   const SizedBox(height: 16),

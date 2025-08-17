@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pay_evm/utils/custom_widgets.dart';
 import '../services/wallet_service.dart';
 import '../utils/app_theme.dart';
-import 'WalletScreen.dart';
 import 'SecuritySetupScreen.dart';
+import '../main.dart';
 
 
 class CreateWalletScreen extends StatefulWidget {
@@ -73,9 +74,10 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
           MaterialPageRoute(
             builder: (context) => SecuritySetupScreen(
               onSuccess: () {
+                // Navigate to the main screen to re-check authentication
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const WalletScreen()),
+                  MaterialPageRoute(builder: (context) => const AppInitializer()),
                   (route) => false,
                 );
               },
@@ -134,9 +136,10 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
           MaterialPageRoute(
             builder: (context) => SecuritySetupScreen(
               onSuccess: () {
+                // กลับไปที่หน้าหลักเพื่อให้ระบบตรวจสอบ authentication ใหม่
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const WalletScreen()),
+                  MaterialPageRoute(builder: (context) => const AppInitializer()),
                   (route) => false,
                 );
               },
@@ -183,9 +186,10 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
           MaterialPageRoute(
             builder: (context) => SecuritySetupScreen(
               onSuccess: () {
+                // Navigate to the main screen to re-check authentication
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const WalletScreen()),
+                  MaterialPageRoute(builder: (context) => const AppInitializer()),
                   (route) => false,
                 );
               },
@@ -339,19 +343,13 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
         const Spacer(),
         
         // Action button
-        SizedBox(
-          height: 50,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _getActionCallback(),
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: _isLoading
-                ? const CircularProgressIndicator(color: Colors.white)
-                : Text(_getButtonText()),
-          ),
+        CustomButton(
+          text: _getButtonText(),
+          onPressed: _isLoading ? null : _getActionCallback(),
+          isLoading: _isLoading,
+          icon: _selectedTab == 0 ? Icons.add_circle_outline : 
+                _selectedTab == 1 ? Icons.download : Icons.vpn_key,
+          backgroundColor: AppTheme.primaryColor,
         ),
       ],
     );

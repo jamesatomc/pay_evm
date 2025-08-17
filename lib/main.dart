@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:pay_evm/screenpage/WelcomeScreen.dart';
 import 'package:pay_evm/screenpage/WalletScreen.dart';
 import 'package:pay_evm/screenpage/SecuritySetupScreen.dart';
+import 'package:pay_evm/screenpage/AppLockScreen.dart';
 import 'package:pay_evm/utils/app_theme.dart';
 import 'package:pay_evm/services/wallet_service.dart';
 import 'package:pay_evm/services/security_service.dart';
@@ -42,17 +43,54 @@ class AppInitializer extends StatefulWidget {
   State<AppInitializer> createState() => _AppInitializerState();
 }
 
-class _AppInitializerState extends State<AppInitializer> {
+class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObserver {
   final WalletService _walletService = WalletService();
   final SecurityService _securityService = SecurityService();
   bool _isLoading = true;
   bool _hasWallet = false;
   bool _hasSecuritySetup = false;
+  bool _isAuthenticated = false;
+  DateTime? _lastBackgroundTime;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkAppState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _walletService.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        // Record time when app goes to background
+        _lastBackgroundTime = DateTime.now();
+        break;
+      case AppLifecycleState.resumed:
+        // Check when returning to app
+        if (_lastBackgroundTime != null && _isAuthenticated) {
+          final timeDifference = DateTime.now().difference(_lastBackgroundTime!);
+          // If away from app for more than 30 seconds, lock app again
+          if (timeDifference.inSeconds > 30) {
+            setState(() {
+              _isAuthenticated = false;
+            });
+          }
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   Future<void> _checkAppState() async {
@@ -168,14 +206,17 @@ class _AppInitializerState extends State<AppInitializer> {
           });
         },
       );
+    } else if (!_isAuthenticated) {
+      // แสดงหน้าจอ PIN ทุกครั้งที่เปิดแอพ (เมื่อมี wallet และ security setup แล้ว)
+      return AppLockScreen(
+        onUnlocked: () {
+          setState(() {
+            _isAuthenticated = true;
+          });
+        },
+      );
     } else {
       return const WalletScreen();
     }
-  }
-
-  @override
-  void dispose() {
-    _walletService.dispose();
-    super.dispose();
   }
 }

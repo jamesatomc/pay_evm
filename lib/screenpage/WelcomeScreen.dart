@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pay_evm/utils/custom_widgets.dart';
 import 'CreateWalletScreen.dart';
+
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -68,9 +70,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF667eea),
-              Color(0xFF764ba2),
+              Color(0xFF1a1a2e),
+              Color(0xFF16213e),
+              Color(0xFF0f3460),
             ],
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -87,22 +91,30 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       children: [
                         // App Logo/Icon
                         Container(
-                          width: 100,
-                          height: 100,
+                          width: 120,
+                          height: 120,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(25),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Color(0xFF6C63FF),
+                                Color(0xFF5A52E8),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+                                color: const Color(0xFF6C63FF).withOpacity(0.3),
+                                blurRadius: 30,
+                                offset: const Offset(0, 15),
+                                spreadRadius: 5,
                               ),
                             ],
                           ),
                           child: const Icon(
-                            Icons.account_balance_wallet,
-                            size: 50,
+                            Icons.account_balance_wallet_outlined,
+                            size: 60,
                             color: Colors.white,
                           ),
                         ),
@@ -113,24 +125,42 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         const Text(
                           'Kanari Wallet',
                           style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w800,
                             color: Colors.white,
-                            letterSpacing: 1.2,
+                            letterSpacing: 0.5,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 2),
+                                blurRadius: 8,
+                                color: Color(0x40000000),
+                              ),
+                            ],
                           ),
                         ),
                         
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 16),
                         
                         // Subtitle
-                        Text(
-                          'Your gateway to the decentralized world',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.w400,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
+                          child: Text(
+                            'Your gateway to the decentralized world',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.white.withOpacity(0.9),
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ],
                     ),
@@ -148,32 +178,39 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           // Features list
                           Flexible(
                             child: Container(
-                              padding: const EdgeInsets.all(20),
+                              padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(20),
+                                color: Colors.white.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.2),
+                                  color: Colors.white.withOpacity(0.15),
                                   width: 1,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
                               ),
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   _buildFeatureItem(
-                                    Icons.security,
+                                    Icons.security_outlined,
                                     'Secure & Private',
                                     'Your keys, your crypto',
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 16),
                                   _buildFeatureItem(
-                                    Icons.speed,
+                                    Icons.flash_on_outlined,
                                     'Fast Transactions',
                                     'Quick and efficient transfers',
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 16),
                                   _buildFeatureItem(
-                                    Icons.language,
+                                    Icons.language_outlined,
                                     'Multi-Network',
                                     'Support for multiple blockchains',
                                   ),
@@ -188,55 +225,23 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           Column(
                             children: [
                               // Create Wallet Button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: ElevatedButton(
-                                  onPressed: () => _navigateToCreateWallet(context),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    foregroundColor: const Color(0xFF667eea),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Get Started',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
+                              CustomButton(
+                                text: 'Get Started',
+                                onPressed: () => _navigateToCreateWallet(context),
+                                icon: Icons.rocket_launch_outlined,
+                                backgroundColor: const Color(0xFF6C63FF),
                               ),
                               
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 16),
                               
                               // Import Wallet Button
-                              SizedBox(
-                                width: double.infinity,
-                                height: 52,
-                                child: OutlinedButton(
-                                  onPressed: () => _navigateToImportWallet(context),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.white,
-                                    side: BorderSide(
-                                      color: Colors.white.withOpacity(0.5),
-                                      width: 2,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    'Import Existing Wallet',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
+                              CustomButton(
+                                text: 'Import Existing Wallet',
+                                onPressed: () => _navigateToImportWallet(context),
+                                icon: Icons.download_outlined,
+                                isOutlined: true,
+                                backgroundColor: Colors.white.withOpacity(0.3),
+                                textColor: Colors.white,
                               ),
                             ],
                           ),
@@ -257,19 +262,33 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     return Row(
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(10),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF6C63FF),
+                Color(0xFF5A52E8),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF6C63FF).withOpacity(0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Icon(
             icon,
             color: Colors.white,
-            size: 20,
+            size: 24,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,15 +297,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                 title,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 14,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
               ),
+              const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
-                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
                 ),
               ),
             ],

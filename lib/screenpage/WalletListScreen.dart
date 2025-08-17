@@ -42,7 +42,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       //eng
-      _showError('เกิดข้อผิดพลาดในการโหลดกระเป๋า: $e');
+      _showError('Error loading wallets: $e');
     }
   }
 
@@ -54,10 +54,10 @@ class _WalletListScreenState extends State<WalletListScreen> {
       
       if (mounted) {
         Navigator.pop(context, activeWallet);
-        _showSuccess('เปลี่ยนกระเป๋าสำเร็จ');
+        _showSuccess('Wallet switched successfully');
       }
     } catch (e) {
-      _showError('เกิดข้อผิดพลาดในการเปลี่ยนกระเป๋า: $e');
+      _showError('Error switching wallet: $e');
     }
   }
 
@@ -66,17 +66,17 @@ class _WalletListScreenState extends State<WalletListScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ยืนยันการลบ'),
-        content: const Text('คุณแน่ใจหรือไม่ที่จะลบกระเป๋านี้? การดำเนินการนี้ไม่สามารถยกเลิกได้'),
+        title: const Text('Confirm Deletion'),
+        content: const Text('Are you sure you want to delete this wallet? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('ยกเลิก'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('ลบ'),
+            child: const Text('Delete'),
           ),
         ],
       ),
@@ -86,9 +86,9 @@ class _WalletListScreenState extends State<WalletListScreen> {
       try {
         await _walletService.deleteWallet(address);
         await _loadWallets(); // Reload wallets
-        _showSuccess('ลบกระเป๋าสำเร็จ');
+        _showSuccess('Wallet deleted successfully');
       } catch (e) {
-        _showError('เกิดข้อผิดพลาดในการลบกระเป๋า: $e');
+        _showError('Error deleting wallet: $e');
       }
     }
   }
@@ -115,7 +115,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('ปิด'),
+            child: const Text('Close'),
           ),
         ],
       ),
