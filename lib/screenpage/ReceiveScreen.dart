@@ -39,7 +39,9 @@ class ReceiveScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Scan QR Code or copy the address',
-              style: TextStyle(color: Colors.grey[600]),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodyMedium?.color,
+              ),
             ),
             const SizedBox(height: 40),
             
@@ -157,17 +159,28 @@ class ReceiveScreen extends StatelessWidget {
             
             // Warning message
             Card(
-              color: Colors.orange[50],
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.warningColor.withOpacity(0.15)
+                  : AppTheme.warningColor.withOpacity(0.1),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Icon(Icons.warning, color: Colors.orange[700], size: 20),
+                    Icon(
+                      Icons.warning, 
+                      color: AppTheme.warningColor, 
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Only send ETH and ERC-20 tokens\nSending other coins may result in loss',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
+                        ),
                       ),
                     ),
                   ],

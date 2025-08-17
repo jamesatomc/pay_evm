@@ -162,14 +162,14 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                 margin: const EdgeInsets.only(top: 4),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.2),
+                  color: AppTheme.warningColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   'Testnet',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.orange,
+                    color: AppTheme.warningColor,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -207,13 +207,16 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
+                        Icon(Icons.delete, color: AppTheme.errorColor),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Delete', 
+                          style: TextStyle(color: AppTheme.errorColor),
+                        ),
                       ],
                     ),
                   ),
@@ -292,7 +295,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       case 'alpen-testnet':
         return const Color(0xFFF7931A); // Bitcoin orange
       default:
-        return Colors.grey;
+        return AppTheme.primaryColor;
     }
   }
 

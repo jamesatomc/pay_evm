@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/wallet_model.dart';
+import '../utils/app_theme.dart';
 
 class ShowMnemonicScreen extends StatelessWidget {
   final WalletModel wallet;
@@ -30,29 +31,40 @@ class ShowMnemonicScreen extends StatelessWidget {
           children: [
             // Warning section
             Card(
-              color: Colors.red[50],
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.errorColor.withOpacity(0.15)
+                  : AppTheme.errorColor.withOpacity(0.1),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    Icon(Icons.security, color: Colors.red[700], size: 32),
+                    Icon(
+                      Icons.security, 
+                      color: AppTheme.errorColor, 
+                      size: 32,
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'Important!',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.red[700],
+                        color: AppTheme.errorColor,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       //eng
                       '• Save this Mnemonic phrase securely\n'
                       '• Do not share with anyone\n'
                       '• If Mnemonic is lost, wallet cannot be recovered\n'
                       '• Write it down and keep it in a safe place',
-                      style: TextStyle(fontSize: 12),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppTheme.darkTextPrimary
+                            : AppTheme.lightTextPrimary,
+                      ),
                     ),
                   ],
                 ),
@@ -81,9 +93,11 @@ class ShowMnemonicScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Theme.of(context).cardColor.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[300]!),
+                  border: Border.all(
+                    color: Theme.of(context).dividerColor,
+                  ),
                 ),
                 child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -97,9 +111,11 @@ class ShowMnemonicScreen extends StatelessWidget {
                     return Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                       ),
                       child: Row(
                         children: [

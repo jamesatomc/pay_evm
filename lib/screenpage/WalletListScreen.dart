@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/wallet_service.dart';
 import '../models/wallet_model.dart';
+import '../utils/app_theme.dart';
 
 class WalletListScreen extends StatefulWidget {
   const WalletListScreen({super.key});
@@ -136,7 +137,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Theme.of(context).cardColor.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
@@ -212,17 +213,22 @@ class _WalletListScreenState extends State<WalletListScreen> {
           Icon(
             Icons.account_balance_wallet_outlined,
             size: 64,
-            color: Colors.grey[400],
+            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(
             'No wallets yet',
-            style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            style: TextStyle(
+              fontSize: 18, 
+              color: Theme.of(context).textTheme.titleMedium?.color,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Start by creating a new wallet',
-            style: TextStyle(color: Colors.grey[500]),
+            style: TextStyle(
+              color: Theme.of(context).textTheme.bodyMedium?.color,
+            ),
           ),
         ],
       ),
@@ -241,7 +247,9 @@ class _WalletListScreenState extends State<WalletListScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: isActive ? Colors.green : Colors.grey,
+              backgroundColor: isActive 
+                  ? Theme.of(context).primaryColor
+                  : Theme.of(context).disabledColor,
               child: Icon(
                 Icons.account_balance_wallet,
                 color: Colors.white,
@@ -305,13 +313,16 @@ class _WalletListScreenState extends State<WalletListScreen> {
                     ],
                   ),
                 ),
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete Wallet', style: TextStyle(color: Colors.red)),
+                      Icon(Icons.delete, color: AppTheme.errorColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Delete Wallet', 
+                        style: TextStyle(color: AppTheme.errorColor),
+                      ),
                     ],
                   ),
                 ),

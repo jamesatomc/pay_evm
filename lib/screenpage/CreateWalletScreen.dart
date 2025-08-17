@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/wallet_service.dart';
+import '../utils/app_theme.dart';
 import 'WalletScreen.dart';
 import 'SecuritySetupScreen.dart';
 
@@ -234,7 +235,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
           Container(
             margin: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: Theme.of(context).cardColor.withOpacity(0.7),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -382,7 +383,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
                   '• Please keep the mnemonic phrase safe and secure\n'
                   '• Do not share the mnemonic phrase with anyone\n'
                   '• You can also import wallets with 24-word phrases',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(fontSize: 12),
                 ),
               ],
             ),
@@ -454,10 +455,10 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
                   style: const TextStyle(fontSize: 11),
                 ),
                 backgroundColor: _mnemonicWordCount == 12 || _mnemonicWordCount == 24
-                    ? Colors.green[100]
+                    ? Theme.of(context).primaryColor.withOpacity(0.1)
                     : _mnemonicWordCount > 0
-                        ? Colors.orange[100]
-                        : Colors.grey[100],
+                        ? Theme.of(context).colorScheme.error.withOpacity(0.1)
+                        : Theme.of(context).cardColor,
               ),
             ),
             helperText: 'Enter 12 or 24 word mnemonic phrase separated by spaces',
@@ -466,7 +467,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
         ),
         const SizedBox(height: 16),
         Card(
-          color: Colors.blue[50],
+          color: Theme.of(context).primaryColor.withOpacity(0.1),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -498,17 +499,28 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
         ),
         const SizedBox(height: 16),
         Card(
-          color: Colors.orange[50],
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppTheme.warningColor.withOpacity(0.15)
+              : AppTheme.warningColor.withOpacity(0.1),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Icon(Icons.warning, color: Colors.orange[700], size: 20),
+                Icon(
+                  Icons.warning, 
+                  color: AppTheme.warningColor, 
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Please verify the mnemonic phrase before proceeding',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppTheme.darkTextPrimary
+                          : AppTheme.lightTextPrimary,
+                    ),
                   ),
                 ),
               ],
@@ -534,17 +546,28 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
         ),
         const SizedBox(height: 16),
         Card(
-          color: Colors.red[50],
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppTheme.errorColor.withOpacity(0.15)
+              : AppTheme.errorColor.withOpacity(0.1),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Icon(Icons.security, color: Colors.red[700], size: 20),
+                Icon(
+                  Icons.security, 
+                  color: AppTheme.errorColor, 
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Private Key is very important information. Do not share it with anyone.',
-                    style: TextStyle(fontSize: 12),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppTheme.darkTextPrimary
+                          : AppTheme.lightTextPrimary,
+                    ),
                   ),
                 ),
               ],

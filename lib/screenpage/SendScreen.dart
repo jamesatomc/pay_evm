@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../services/wallet_service.dart';
 import '../services/token_service.dart';
-import '../services/security_service.dart';
 import '../models/wallet_model.dart';
 import '../models/network_model.dart';
 import '../models/token_model.dart';
+import '../utils/app_theme.dart';
 import 'PinVerificationScreen.dart';
 
 class SendScreen extends StatefulWidget {
@@ -278,7 +278,7 @@ class _SendScreenState extends State<SendScreen> {
                       'Balance: ${_selectedTokenBalance.toStringAsFixed(6)} ${_selectedToken?.symbol ?? 'ETH'}',
                       style: TextStyle(
                         fontSize: 16,
-                        color: Colors.grey[700],
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                   ],
@@ -304,7 +304,9 @@ class _SendScreenState extends State<SendScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(
+                          color: Theme.of(context).dividerColor,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: DropdownButtonHideUnderline(
@@ -327,7 +329,9 @@ class _SendScreenState extends State<SendScreen> {
                                     width: 32,
                                     height: 32,
                                     decoration: BoxDecoration(
-                                      color: token.isNative ? Colors.blue[100] : Colors.grey[200],
+                                      color: token.isNative 
+                                          ? Theme.of(context).primaryColor.withOpacity(0.1)
+                                          : Theme.of(context).cardColor.withOpacity(0.5),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Center(
@@ -353,7 +357,7 @@ class _SendScreenState extends State<SendScreen> {
                                           token.name,
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: Colors.grey[600],
+                                            color: Theme.of(context).textTheme.bodySmall?.color,
                                           ),
                                         ),
                                       ],
@@ -428,17 +432,28 @@ class _SendScreenState extends State<SendScreen> {
             
             // Warning
             Card(
-              color: Colors.orange[50],
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.warningColor.withOpacity(0.15)
+                  : AppTheme.warningColor.withOpacity(0.1),
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Icon(Icons.warning, color: Colors.orange[700], size: 20),
+                    Icon(
+                      Icons.warning, 
+                      color: AppTheme.warningColor, 
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Please check the address and amount carefully. Once sent, it cannot be undone.',
-                        style: TextStyle(fontSize: 12),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
+                        ),
                       ),
                     ),
                   ],

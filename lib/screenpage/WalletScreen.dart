@@ -237,7 +237,7 @@ class WalletScreenState extends State<WalletScreen> {
       case 'alpen-testnet':
         return const Color(0xFFF7931A); // Bitcoin orange
       default:
-        return Colors.grey;
+        return AppTheme.primaryColor;
     }
   }
 
@@ -575,7 +575,7 @@ class WalletScreenState extends State<WalletScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).dividerColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
