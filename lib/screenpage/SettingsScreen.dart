@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../providers/theme_provider.dart';
 import '../utils/app_theme.dart';
+import '../services/security_service.dart';
+import 'ChangePinScreen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -13,11 +15,15 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   String _version = 'Loading...';
+  final SecurityService _securityService = SecurityService();
+  bool _biometricEnabled = false;
+  bool _biometricAvailable = false;
 
   @override
   void initState() {
     super.initState();
     _loadPackageInfo();
+    _loadBiometricSettings();
   }
 
   Future<void> _loadPackageInfo() async {
@@ -25,6 +31,103 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _version = '${packageInfo.version}+${packageInfo.buildNumber}';
     });
+  }
+
+  Future<void> _loadBiometricSettings() async {
+    try {
+      final isAvailable = await _securityService.isBiometricAvailable();
+      final isEnabled = await _securityService.isBiometricEnabled();
+      
+      if (mounted) {
+        setState(() {
+          _biometricAvailable = isAvailable;
+          _biometricEnabled = isEnabled;
+        });
+      }
+    } catch (e) {
+      print('Error loading biometric settings: $e');
+    }
+  }
+
+  Future<void> _toggleBiometric(bool value) async {
+    try {
+      if (value) {
+        // Test biometric authentication before enabling
+        final isAuthenticated = await _securityService.authenticateWithBiometric();
+        if (!isAuthenticated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(
+                    Icons.error,
+                    color: AppTheme.errorColor,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('Biometric authentication failed'),
+                ],
+              ),
+              backgroundColor: AppTheme.errorColor.withOpacity(0.1),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          );
+          return;
+        }
+      }
+      
+      await _securityService.setBiometricEnabled(value);
+      
+      setState(() {
+        _biometricEnabled = value;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.check_circle,
+                color: AppTheme.successColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                value 
+                    ? 'Biometric authentication enabled'
+                    : 'Biometric authentication disabled',
+              ),
+            ],
+          ),
+          backgroundColor: AppTheme.successColor.withOpacity(0.1),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                Icons.error,
+                color: AppTheme.errorColor,
+              ),
+              const SizedBox(width: 8),
+              Text('Failed to toggle biometric: $e'),
+            ],
+          ),
+          backgroundColor: AppTheme.errorColor.withOpacity(0.1),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+    }
   }
 
   @override
@@ -149,11 +252,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Update your security PIN',
             Icons.lock_outline,
             () {
-              // TODO: Navigate to change PIN screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Change PIN feature coming soon')),
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ChangePinScreen(),
+                ),
               );
             },
+          ),
+          const Divider(height: AppTheme.spacingL),
+          // Biometric toggle
+          ListTile(
+            leading: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: _biometricEnabled 
+                    ? AppTheme.primaryColor.withOpacity(0.2)
+                    : Theme.of(context).brightness == Brightness.dark
+                        ? AppTheme.darkCardColor
+                        : AppTheme.lightSurfaceColor,
+                borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+              ),
+              child: Icon(
+                Icons.fingerprint,
+                color: _biometricEnabled 
+                    ? AppTheme.primaryColor 
+                    : Theme.of(context).brightness == Brightness.dark
+                        ? AppTheme.darkTextSecondary
+                        : AppTheme.lightTextSecondary,
+              ),
+            ),
+            title: const Text(
+              'Biometric Authentication',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Text(
+              _biometricAvailable 
+                  ? (_biometricEnabled ? 'Enabled for quick access' : 'Use fingerprint or face unlock')
+                  : 'Not available on this device',
+            ),
+            trailing: _biometricAvailable
+                ? Switch(
+                    value: _biometricEnabled,
+                    onChanged: _toggleBiometric,
+                    activeColor: AppTheme.primaryColor,
+                  )
+                : null,
+            contentPadding: EdgeInsets.zero,
           ),
           const Divider(height: AppTheme.spacingL),
           _buildSettingItem(

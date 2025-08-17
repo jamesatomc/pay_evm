@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../utils/app_theme.dart';
-import '../services/security_service.dart';
 
 class PinSetupScreen extends StatefulWidget {
   final Function(String) onPinSetup;
@@ -18,42 +17,16 @@ class PinSetupScreen extends StatefulWidget {
 class _PinSetupScreenState extends State<PinSetupScreen> {
   final List<TextEditingController> _pinControllers = List.generate(6, (index) => TextEditingController());
   final List<FocusNode> _pinFocusNodes = List.generate(6, (index) => FocusNode());
-  final SecurityService _securityService = SecurityService();
   
   String _firstPin = '';
   bool _isConfirmingPin = false;
   bool _isLoading = false;
   String _errorMessage = '';
-  bool _showBiometricOption = false;
-  bool _enableBiometric = false;
 
   @override
   void initState() {
     super.initState();
-    _checkBiometricAvailability();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_pinFocusNodes.isNotEmpty && mounted) {
-        _pinFocusNodes[0].requestFocus();
-      }
-    });
-  }
-
-  Future<void> _checkBiometricAvailability() async {
-    try {
-      final isAvailable = await _securityService.isBiometricAvailable();
-      if (mounted) {
-        setState(() {
-          _showBiometricOption = isAvailable;
-        });
-      }
-    } catch (e) {
-      print('Biometric availability check failed: $e');
-      if (mounted) {
-        setState(() {
-          _showBiometricOption = false;
-        });
-      }
-    }
+    // ไม่ต้อง autofocus เพราะเราใช้ numpad
   }
 
   @override
@@ -93,6 +66,38 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     });
   }
 
+  void _onNumberPressed(String number) {
+    // Find the first empty field
+    for (int i = 0; i < 6; i++) {
+      if (_pinControllers[i].text.isEmpty) {
+        _pinControllers[i].text = number;
+        setState(() {});
+        
+        // Check if PIN is complete
+        String currentPin = _pinControllers.map((e) => e.text).join();
+        if (currentPin.length == 6) {
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) {
+              _handlePinComplete(currentPin);
+            }
+          });
+        }
+        break;
+      }
+    }
+  }
+
+  void _onBackspacePressed() {
+    // Find the last filled field and clear it
+    for (int i = 5; i >= 0; i--) {
+      if (_pinControllers[i].text.isNotEmpty) {
+        _pinControllers[i].text = '';
+        setState(() {});
+        break;
+      }
+    }
+  }
+
   Future<void> _handlePinComplete(String pin) async {
     if (!_isConfirmingPin) {
       setState(() {
@@ -109,13 +114,6 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
         setState(() => _isLoading = true);
         
         try {
-          if (_enableBiometric && _showBiometricOption) {
-            try {
-              await _securityService.setBiometricEnabled(true);
-            } catch (e) {
-              print('Failed to enable biometric, continuing with PIN only: $e');
-            }
-          }
           widget.onPinSetup(pin);
         } catch (e) {
           if (mounted) {
@@ -143,158 +141,220 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     for (var controller in _pinControllers) {
       controller.clear();
     }
-    if (_pinFocusNodes.isNotEmpty) {
-      _pinFocusNodes[0].requestFocus();
-    }
+    // ไม่ต้อง focus เพราะเราใช้ numpad
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surfaceColor,
-      appBar: AppBar(
-        title: const Text('Security Setup'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-      ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            children: [
+              // Top spacing
+              const SizedBox(height: 60),
+              
+              // Header section
+              Column(
                 children: [
+                  // Simple lock icon
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      color: AppTheme.primaryColor.withOpacity(0.08),
+                      shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.security,
-                      size: 40,
+                      Icons.lock_outlined,
+                      size: 28,
                       color: AppTheme.primaryColor,
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
+                  // Title
                   Text(
-                    _isConfirmingPin ? 'Confirm Your PIN' : 'Create Your PIN',
+                    _isConfirmingPin ? 'Confirm PIN' : 'Create PIN',
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
                       color: AppTheme.textPrimary,
+                      letterSpacing: -0.5,
                     ),
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
+                  // Subtitle
                   Text(
                     _isConfirmingPin 
-                        ? 'Please enter your PIN again to confirm'
-                        : 'Create a 6-digit PIN to secure your wallet',
+                        ? 'Enter your PIN again'
+                        : 'Create a 6-digit PIN',
                     style: TextStyle(
                       fontSize: 16,
                       color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w400,
                     ),
-                    textAlign: TextAlign.center,
                   ),
-
-                  const SizedBox(height: 48),
-
-                  // Responsive PIN input fields
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      double maxWidth = constraints.maxWidth;
-                      double totalSpacing = 5 * 8.0;
-                      double availableWidth = maxWidth - totalSpacing;
-                      double fieldWidth = (availableWidth / 6).clamp(40.0, 60.0);
-                      
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: List.generate(6, (index) => 
-                          _buildPinField(index, fieldWidth)
-                        ),
-                      );
-                    },
-                  ),
-
-                  if (_errorMessage.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.errorColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: AppTheme.errorColor, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _errorMessage,
-                              style: TextStyle(color: AppTheme.errorColor, fontSize: 14),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  if (_showBiometricOption && !_isConfirmingPin) ...[
-                    const SizedBox(height: 32),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.fingerprint, color: AppTheme.primaryColor),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'Enable Biometric Authentication',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                                Switch(
-                                  value: _enableBiometric,
-                                  onChanged: (value) {
-                                    setState(() => _enableBiometric = value);
-                                  },
-                                  activeColor: AppTheme.primaryColor,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Use fingerprint or face unlock for faster access',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 32),
-
-                  if (_isLoading)
-                    CircularProgressIndicator(color: AppTheme.primaryColor),
                 ],
+              ),
+
+              const SizedBox(height: 60),
+
+              // PIN dots indicator
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(6, (index) {
+                  bool isFilled = _pinControllers[index].text.isNotEmpty;
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isFilled 
+                          ? AppTheme.primaryColor 
+                          : AppTheme.textMuted.withOpacity(0.3),
+                      border: Border.all(
+                        color: isFilled 
+                            ? AppTheme.primaryColor 
+                            : AppTheme.textMuted.withOpacity(0.3),
+                        width: 1.5,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+
+              const SizedBox(height: 40),
+
+              // Hidden PIN input (read-only to prevent keyboard)
+              Opacity(
+                opacity: 0.0,
+                child: SizedBox(
+                  height: 1,
+                  child: Row(
+                    children: List.generate(6, (index) => 
+                      Expanded(
+                        child: TextField(
+                          controller: _pinControllers[index],
+                          focusNode: _pinFocusNodes[index],
+                          readOnly: true,
+                          keyboardType: TextInputType.none,
+                          maxLength: 1,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(
+                            counterText: '',
+                            border: InputBorder.none,
+                          ),
+                          onChanged: (value) => _onPinChanged(index, value),
+                        ),
+                      )
+                    ),
+                  ),
+                ),
+              ),
+
+              // Numpad
+              Expanded(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: GridView.count(
+                    crossAxisCount: 3,
+                    childAspectRatio: 1.1,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    children: [
+                      // Numbers 1-9
+                      ...List.generate(9, (index) => _buildNumButton('${index + 1}')),
+                      
+                      // Empty space, 0, backspace
+                      const SizedBox(),
+                      _buildNumButton('0'),
+                      _buildBackspaceButton(),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Error message
+              if (_errorMessage.isNotEmpty) 
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.errorColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: AppTheme.errorColor,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _errorMessage,
+                        style: TextStyle(
+                          color: AppTheme.errorColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Loading indicator
+              if (_isLoading)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: AppTheme.primaryColor,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+                ),
+
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNumButton(String number) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _onNumberPressed(number),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppTheme.textMuted.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textPrimary,
               ),
             ),
           ),
@@ -303,49 +363,28 @@ class _PinSetupScreenState extends State<PinSetupScreen> {
     );
   }
 
-  Widget _buildPinField(int index, double width) {
-    bool hasValue = _pinControllers[index].text.isNotEmpty;
-    bool hasError = _errorMessage.isNotEmpty;
-    
-    return Container(
-      width: width,
-      height: 60,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: hasError 
-              ? AppTheme.errorColor
-              : hasValue 
-                  ? AppTheme.primaryColor 
-                  : AppTheme.textMuted,
-          width: 2,
+  Widget _buildBackspaceButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _onBackspacePressed,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppTheme.textMuted.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Center(
+            child: Icon(
+              Icons.backspace_outlined,
+              color: AppTheme.textSecondary,
+              size: 22,
+            ),
+          ),
         ),
-        borderRadius: BorderRadius.circular(12),
-        color: hasValue ? AppTheme.primaryColor.withOpacity(0.05) : null,
-      ),
-      child: TextField(
-        controller: _pinControllers[index],
-        focusNode: _pinFocusNodes[index],
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: width > 45 ? 24 : 20,
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textPrimary,
-        ),
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        obscureText: true,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(
-          counterText: '',
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-        ),
-        onChanged: (value) => _onPinChanged(index, value),
-        onTap: () {
-          _pinControllers[index].selection = TextSelection.fromPosition(
-            TextPosition(offset: _pinControllers[index].text.length),
-          );
-        },
       ),
     );
   }

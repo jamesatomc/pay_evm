@@ -48,10 +48,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
       CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
     );
     
-    // Auto focus first field
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _pinFocusNodes[0].requestFocus();
-    });
+    // ไม่ต้อง autofocus เพราะเราใช้ numpad
   }
 
   @override
@@ -83,6 +80,34 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
     setState(() {
       _errorMessage = '';
     });
+  }
+
+  void _onNumberPressed(String number) {
+    // Find the first empty field
+    for (int i = 0; i < 6; i++) {
+      if (_pinControllers[i].text.isEmpty) {
+        _pinControllers[i].text = number;
+        setState(() {});
+        
+        // Check if PIN is complete
+        String currentPin = _pinControllers.map((e) => e.text).join();
+        if (currentPin.length == 6) {
+          _verifyPin(currentPin);
+        }
+        break;
+      }
+    }
+  }
+
+  void _onBackspacePressed() {
+    // Find the last filled field and clear it
+    for (int i = 5; i >= 0; i--) {
+      if (_pinControllers[i].text.isNotEmpty) {
+        _pinControllers[i].text = '';
+        setState(() {});
+        break;
+      }
+    }
   }
 
   Future<void> _verifyPin(String pin) async {
@@ -127,7 +152,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
     for (var controller in _pinControllers) {
       controller.clear();
     }
-    _pinFocusNodes[0].requestFocus();
+    // ไม่ต้อง focus เพราะเราใช้ numpad
   }
 
   void _showLockDialog() {
@@ -156,176 +181,258 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.surfaceColor,
-      appBar: AppBar(
-        title: const Text('Security Verification'),
+      appBar: widget.onCancel != null ? AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: AppTheme.textPrimary,
-        centerTitle: true,
-        leading: widget.onCancel != null
-            ? IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  widget.onCancel?.call();
-                  Navigator.of(context).pop(false);
-                },
-              )
-            : null,
-      ),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () {
+            widget.onCancel?.call();
+            Navigator.of(context).pop(false);
+          },
+        ),
+      ) : null,
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            children: [
+              // Top spacing
+              SizedBox(height: widget.onCancel != null ? 20 : 60),
+              
+              // Header section
+              Column(
                 children: [
-                  // Security icon
+                  // Simple lock icon
                   Container(
-                    width: 80,
-                    height: 80,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      color: AppTheme.primaryColor.withOpacity(0.08),
+                      shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.lock_outline,
-                      size: 40,
+                      Icons.lock_outlined,
+                      size: 28,
                       color: AppTheme.primaryColor,
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
 
-                  // Title and description
+                  // Title
                   Text(
                     widget.title,
                     style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w600,
                       color: AppTheme.textPrimary,
+                      letterSpacing: -0.5,
                     ),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
+                  // Subtitle
                   Text(
                     widget.subtitle,
                     style: TextStyle(
                       fontSize: 16,
                       color: AppTheme.textSecondary,
+                      fontWeight: FontWeight.w400,
                     ),
                     textAlign: TextAlign.center,
                   ),
+                ],
+              ),
 
-                  const SizedBox(height: 48),
+              const SizedBox(height: 60),
 
-                  // PIN input fields with shake animation - Make responsive
-                  AnimatedBuilder(
-                    animation: _shakeAnimation,
-                    builder: (context, child) {
-                      return Transform.translate(
-                        offset: Offset(_shakeAnimation.value * 10, 0),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            // Calculate field width based on available space
-                            double maxWidth = constraints.maxWidth;
-                            double totalSpacing = 5 * 8.0; // 5 gaps of 8 pixels each
-                            double availableWidth = maxWidth - totalSpacing - 32; // 32 for padding
-                            double fieldWidth = (availableWidth / 6).clamp(40.0, 60.0);
-                            
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: List.generate(6, (index) => 
-                                _buildPinField(index, fieldWidth)
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                  ),
-
-                  if (_errorMessage.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.errorColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            color: AppTheme.errorColor,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _errorMessage,
-                              style: TextStyle(
-                                color: AppTheme.errorColor,
-                                fontSize: 14,
-                              ),
+              // PIN dots indicator with shake animation
+              AnimatedBuilder(
+                animation: _shakeAnimation,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(_shakeAnimation.value * 10, 0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(6, (index) {
+                        bool isFilled = _pinControllers[index].text.isNotEmpty;
+                        bool hasError = _errorMessage.isNotEmpty;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 8),
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: hasError
+                                ? AppTheme.errorColor.withOpacity(0.2)
+                                : isFilled 
+                                    ? AppTheme.primaryColor 
+                                    : AppTheme.textMuted.withOpacity(0.3),
+                            border: Border.all(
+                              color: hasError
+                                  ? AppTheme.errorColor
+                                  : isFilled 
+                                      ? AppTheme.primaryColor 
+                                      : AppTheme.textMuted.withOpacity(0.3),
+                              width: 1.5,
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      }),
                     ),
-                  ],
+                  );
+                },
+              ),
 
-                  const SizedBox(height: 24),
+              const SizedBox(height: 40),
 
-                  // Attempt counter
-                  if (_attemptCount > 0)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+              // Hidden PIN input (read-only to prevent keyboard)
+              Opacity(
+                opacity: 0.0,
+                child: SizedBox(
+                  height: 1,
+                  child: Row(
+                    children: List.generate(6, (index) => 
+                      Expanded(
+                        child: TextField(
+                          controller: _pinControllers[index],
+                          focusNode: _pinFocusNodes[index],
+                          readOnly: true,
+                          keyboardType: TextInputType.none,
+                          maxLength: 1,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          decoration: const InputDecoration(
+                            counterText: '',
+                            border: InputBorder.none,
+                          ),
+                          onChanged: (value) => _onPinChanged(index, value),
+                        ),
+                      )
+                    ),
+                  ),
+                ),
+              ),
+
+              // Numpad
+              Expanded(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: GridView.count(
+                    crossAxisCount: 3,
+                    childAspectRatio: 1.1,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    children: [
+                      // Numbers 1-9
+                      ...List.generate(9, (index) => _buildNumButton('${index + 1}')),
+                      
+                      // Biometric button, 0, backspace
+                      widget.showBiometric && widget.onBiometricPressed != null
+                          ? _buildBiometricButton()
+                          : const SizedBox(),
+                      _buildNumButton('0'),
+                      _buildBackspaceButton(),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Error message
+              if (_errorMessage.isNotEmpty) 
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.errorColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        color: AppTheme.errorColor,
+                        size: 18,
                       ),
-                      child: Text(
-                        'Attempts remaining: ${3 - _attemptCount}',
+                      const SizedBox(width: 8),
+                      Text(
+                        _errorMessage,
                         style: TextStyle(
-                          color: Colors.orange,
-                          fontSize: 12,
+                          color: AppTheme.errorColor,
+                          fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
+                    ],
+                  ),
+                ),
+
+              // Attempt counter
+              if (_attemptCount > 0)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Attempts: ${3 - _attemptCount} left',
+                    style: TextStyle(
+                      color: Colors.orange,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
+                  ),
+                ),
 
-                  const SizedBox(height: 32),
-
-                  // Loading indicator
-                  if (_isLoading)
-                    CircularProgressIndicator(
+              // Loading indicator
+              if (_isLoading)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
                       color: AppTheme.primaryColor,
+                      strokeWidth: 2.5,
                     ),
+                  ),
+                ),
 
-                  // Biometric button
-                  if (widget.showBiometric && widget.onBiometricPressed != null) ...[
-                    const SizedBox(height: 32),
-                    TextButton.icon(
-                      onPressed: widget.onBiometricPressed,
-                      icon: Icon(Icons.fingerprint, color: AppTheme.primaryColor),
-                      label: Text(
-                        'Use Biometric',
-                        style: TextStyle(color: AppTheme.primaryColor),
-                      ),
-                    ),
-                  ],
-                ],
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNumButton(String number) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _onNumberPressed(number),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppTheme.textMuted.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.textPrimary,
               ),
             ),
           ),
@@ -334,51 +441,55 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
     );
   }
 
-  Widget _buildPinField(int index, [double? width]) {
-    bool hasValue = _pinControllers[index].text.isNotEmpty;
-    bool hasError = _errorMessage.isNotEmpty;
-    double fieldWidth = width ?? 50;
-    
-    return Container(
-      width: fieldWidth,
-      height: 60,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: hasError 
-              ? AppTheme.errorColor
-              : hasValue 
-                  ? AppTheme.primaryColor 
-                  : AppTheme.textMuted,
-          width: 2,
+  Widget _buildBackspaceButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _onBackspacePressed,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppTheme.textMuted.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Center(
+            child: Icon(
+              Icons.backspace_outlined,
+              color: AppTheme.textSecondary,
+              size: 22,
+            ),
+          ),
         ),
-        borderRadius: BorderRadius.circular(12),
-        color: hasValue ? AppTheme.primaryColor.withOpacity(0.05) : null,
       ),
-      child: TextField(
-        controller: _pinControllers[index],
-        focusNode: _pinFocusNodes[index],
-        textAlign: TextAlign.center,
-        style: TextStyle(
-          fontSize: fieldWidth > 45 ? 24 : 20, // Adjust font size based on field width
-          fontWeight: FontWeight.bold,
-          color: AppTheme.textPrimary,
+    );
+  }
+
+  Widget _buildBiometricButton() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onBiometricPressed,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: AppTheme.primaryColor.withOpacity(0.3),
+              width: 1,
+            ),
+            color: AppTheme.primaryColor.withOpacity(0.05),
+          ),
+          child: Center(
+            child: Icon(
+              Icons.fingerprint,
+              color: AppTheme.primaryColor,
+              size: 24,
+            ),
+          ),
         ),
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        obscureText: true,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: const InputDecoration(
-          counterText: '',
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.zero,
-        ),
-        onChanged: (value) => _onPinChanged(index, value),
-        onTap: () {
-          // Ensure cursor is at the end and prevent selection issues
-          _pinControllers[index].selection = TextSelection.fromPosition(
-            TextPosition(offset: _pinControllers[index].text.length),
-          );
-        },
       ),
     );
   }
