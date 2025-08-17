@@ -1,10 +1,31 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web3dart/web3dart.dart';
+import 'package:http/http.dart';
 import '../models/token_model.dart';
 import '../models/wallet_model.dart';
 import 'network_service.dart';
 import 'wallet_service.dart';
 import 'price_service.dart';
+
+// Custom HTTP client that adds proper headers for JSON-RPC
+class JsonRpcClient extends BaseClient {
+  final Client _inner = Client();
+
+  @override
+  Future<StreamedResponse> send(BaseRequest request) async {
+    // Add proper headers for JSON-RPC requests
+    request.headers['Content-Type'] = 'application/json';
+    request.headers['Accept'] = 'application/json';
+    
+    return _inner.send(request);
+  }
+
+  @override
+  void close() {
+    _inner.close();
+  }
+}
 
 class TokenService {
   static const String _tokensKey = 'custom_tokens';
@@ -162,13 +183,135 @@ class TokenService {
   // Fetch token information from contract
   Future<CustomTokenModel?> fetchTokenInfo(String contractAddress, String networkId) async {
     try {
-      final network = await _networkService.getNetworkById(networkId);
-      if (network == null) return null;
-
-      // This is a simplified version - in a real app you'd call the contract
-      // to get token name, symbol, and decimals using web3dart
+      print('=== Fetching token info from contract ===');
+      print('Contract: $contractAddress');
+      print('Network: $networkId');
       
-      // For now, we'll return a placeholder that requires manual input
+      final network = await _networkService.getNetworkById(networkId);
+      if (network == null) {
+        print('Network not found: $networkId');
+        return null;
+      }
+
+      // Create Web3 client for this network
+      final httpClient = JsonRpcClient();
+      final web3client = Web3Client(network.rpcUrl, httpClient);
+      
+      try {
+        final contractAddress_eth = EthereumAddress.fromHex(contractAddress);
+        
+        // Create ABI for standard ERC-20 functions
+        final contract = DeployedContract(
+          ContractAbi.fromJson(
+            '''[
+              {
+                "constant": true,
+                "inputs": [],
+                "name": "name",
+                "outputs": [{"name": "", "type": "string"}],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+              },
+              {
+                "constant": true,
+                "inputs": [],
+                "name": "symbol",
+                "outputs": [{"name": "", "type": "string"}],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+              },
+              {
+                "constant": true,
+                "inputs": [],
+                "name": "decimals",
+                "outputs": [{"name": "", "type": "uint8"}],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+              }
+            ]''',
+            'ERC20',
+          ),
+          contractAddress_eth,
+        );
+        
+        // Get token name
+        String tokenName = '';
+        try {
+          final nameFunction = contract.function('name');
+          final nameResult = await web3client.call(
+            contract: contract,
+            function: nameFunction,
+            params: [],
+          );
+          if (nameResult.isNotEmpty) {
+            tokenName = nameResult.first as String;
+          }
+        } catch (e) {
+          print('Could not get token name: $e');
+        }
+        
+        // Get token symbol
+        String tokenSymbol = '';
+        try {
+          final symbolFunction = contract.function('symbol');
+          final symbolResult = await web3client.call(
+            contract: contract,
+            function: symbolFunction,
+            params: [],
+          );
+          if (symbolResult.isNotEmpty) {
+            tokenSymbol = symbolResult.first as String;
+          }
+        } catch (e) {
+          print('Could not get token symbol: $e');
+        }
+        
+        // Get token decimals
+        int tokenDecimals = 18; // Default
+        try {
+          final decimalsFunction = contract.function('decimals');
+          final decimalsResult = await web3client.call(
+            contract: contract,
+            function: decimalsFunction,
+            params: [],
+          );
+          if (decimalsResult.isNotEmpty) {
+            tokenDecimals = (decimalsResult.first as BigInt).toInt();
+          }
+        } catch (e) {
+          print('Could not get token decimals, using default 18: $e');
+        }
+        
+        print('Token info fetched:');
+        print('Name: $tokenName');
+        print('Symbol: $tokenSymbol');
+        print('Decimals: $tokenDecimals');
+        print('=== Token info fetch completed ===');
+        
+        return CustomTokenModel(
+          contractAddress: contractAddress,
+          name: tokenName,
+          symbol: tokenSymbol,
+          decimals: tokenDecimals,
+          networkId: networkId,
+        );
+        
+      } finally {
+        web3client.dispose();
+      }
+      
+    } catch (e) {
+      print('=== Token info fetch failed ===');
+      print('Error: $e');
+      print('Error type: ${e.runtimeType}');
+      print('Contract: $contractAddress');
+      print('Network: $networkId');
+      print('=== End token info error ===');
+      
+      // Return a basic model that user can fill manually
       return CustomTokenModel(
         contractAddress: contractAddress,
         name: '', // Will be filled by user
@@ -176,21 +319,99 @@ class TokenService {
         decimals: 18, // Default, can be changed by user
         networkId: networkId,
       );
-    } catch (e) {
-      print('Error fetching token info: $e');
-      return null;
     }
   }
 
   // Get token balance for a wallet
   Future<double> getTokenBalance(String contractAddress, String walletAddress, String networkId) async {
     try {
-      // TODO: Implement actual ERC-20 token balance fetching
-      // This would normally call the token contract's balanceOf method using web3dart
-      // For now, return 0.0 until proper blockchain integration is implemented
-      return 0.0;
+      print('=== Getting ERC-20 token balance ===');
+      print('Contract: $contractAddress');
+      print('Wallet: $walletAddress');
+      print('Network: $networkId');
+      
+      final network = await _networkService.getNetworkById(networkId);
+      if (network == null) {
+        print('Network not found: $networkId');
+        return 0.0;
+      }
+
+      // Create Web3 client for this network
+      final httpClient = JsonRpcClient();
+      final web3client = Web3Client(network.rpcUrl, httpClient);
+      
+      try {
+        // Get token decimals first
+        final token = await getCustomTokens(networkId);
+        final currentToken = token.firstWhere(
+          (t) => t.contractAddress.toLowerCase() == contractAddress.toLowerCase(),
+          orElse: () => CustomTokenModel(
+            contractAddress: contractAddress,
+            name: '',
+            symbol: '',
+            decimals: 18, // Default decimals
+            networkId: networkId,
+          ),
+        );
+        
+        // ERC-20 balanceOf function signature
+        final contractAddress_eth = EthereumAddress.fromHex(contractAddress);
+        final walletAddress_eth = EthereumAddress.fromHex(walletAddress);
+        
+        // Create simple ABI for balanceOf function
+        final contract = DeployedContract(
+          ContractAbi.fromJson(
+            '''[
+              {
+                "constant": true,
+                "inputs": [{"name": "account", "type": "address"}],
+                "name": "balanceOf",
+                "outputs": [{"name": "balance", "type": "uint256"}],
+                "payable": false,
+                "stateMutability": "view",
+                "type": "function"
+              }
+            ]''',
+            'ERC20',
+          ),
+          contractAddress_eth,
+        );
+        
+        final balanceOfFunction = contract.function('balanceOf');
+        
+        final result = await web3client.call(
+          contract: contract,
+          function: balanceOfFunction,
+          params: [walletAddress_eth],
+        );
+        
+        if (result.isNotEmpty) {
+          final balanceInWei = result.first as BigInt;
+          final decimals = currentToken.decimals;
+          final balance = balanceInWei.toDouble() / (BigInt.from(10).pow(decimals).toDouble());
+          
+          print('Token balance found: $balance');
+          print('Balance in Wei: $balanceInWei');
+          print('Decimals: $decimals');
+          print('=== Token balance request completed ===');
+          
+          return balance;
+        }
+        
+        print('No balance result returned');
+        return 0.0;
+        
+      } finally {
+        web3client.dispose();
+      }
+      
     } catch (e) {
-      print('Error getting token balance: $e');
+      print('=== Token balance request failed ===');
+      print('Error: $e');
+      print('Error type: ${e.runtimeType}');
+      print('Contract: $contractAddress');
+      print('Wallet: $walletAddress');
+      print('=== End token balance error ===');
       return 0.0;
     }
   }

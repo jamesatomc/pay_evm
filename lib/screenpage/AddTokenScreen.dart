@@ -121,28 +121,41 @@ class _AddTokenScreenState extends State<AddTokenScreen> with TickerProviderStat
     try {
       final tokenInfo = await _tokenService.fetchTokenInfo(address, widget.network.id);
       if (tokenInfo != null) {
-        // Auto-fill the form if we can fetch token info
+        // Auto-fill the form with fetched token info
         _nameController.text = tokenInfo.name.isNotEmpty ? tokenInfo.name : '';
         _symbolController.text = tokenInfo.symbol.isNotEmpty ? tokenInfo.symbol : '';
         _decimalsController.text = tokenInfo.decimals.toString();
         
-        // Show success message when address is valid
+        // Show success message when token info is fetched
         setState(() => _validationError = null);
         
-        // Show snackbar to inform user they can now fill the form
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('✓ Valid contract address. Please fill in token details.'),
-              backgroundColor: AppTheme.successColor,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 2),
-            ),
-          );
+          if (tokenInfo.name.isNotEmpty && tokenInfo.symbol.isNotEmpty) {
+            // Token info was successfully fetched
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('✓ Token info loaded: ${tokenInfo.symbol} (${tokenInfo.name})'),
+                backgroundColor: AppTheme.successColor,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          } else {
+            // Valid address but couldn't fetch full info
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('✓ Valid contract address. Please fill in token details manually.'),
+                backgroundColor: AppTheme.warningColor,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
       setState(() => _validationError = 'Could not validate token address. Please check network connection.');
+      print('Error validating token: $e');
     } finally {
       setState(() => _isValidating = false);
     }

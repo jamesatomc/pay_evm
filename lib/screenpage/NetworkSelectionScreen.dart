@@ -283,17 +283,8 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       case 'bsc':
       case 'bsc-testnet':
         return const Color(0xFFF3BA2F);
-      case 'polygon':
-      case 'mumbai':
-        return const Color(0xFF8247E5);
-      case 'avalanche':
-      case 'fuji':
-        return const Color(0xFFE84142);
-      case 'fantom':
-      case 'fantom-testnet':
-        return const Color(0xFF1969FF);
       case 'alpen-testnet':
-        return const Color(0xFFF7931A); // Bitcoin orange
+        return const Color.fromARGB(255, 0, 0, 0); // Bitcoin orange
       default:
         return AppTheme.primaryColor;
     }
@@ -310,15 +301,6 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       case 'bsc':
       case 'bsc-testnet':
         return Icons.account_balance;
-      case 'polygon':
-      case 'mumbai':
-        return Icons.hexagon;
-      case 'avalanche':
-      case 'fuji':
-        return Icons.ac_unit;
-      case 'fantom':
-      case 'fantom-testnet':
-        return Icons.speed;
       case 'alpen-testnet':
         return Icons.currency_bitcoin; // Bitcoin icon for sBTC
       default:
