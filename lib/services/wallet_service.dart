@@ -105,9 +105,8 @@ class WalletService {
   }
 
   Future<NetworkModel> getCurrentNetwork() async {
-    if (_currentNetwork == null) {
-      await _initializeNetwork();
-    }
+    // Always refresh network from storage to get latest selection
+    await _initializeNetwork();
     return _currentNetwork!;
   }
 

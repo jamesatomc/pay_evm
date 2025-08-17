@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/wallet_service.dart';
 import 'WalletScreen.dart';
+import 'SecuritySetupScreen.dart';
 
 
 class CreateWalletScreen extends StatefulWidget {
@@ -65,11 +66,20 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
         wordCount: _selectedMnemonicLength,
       );
       if (mounted) {
-        // Navigate to wallet screen and clear navigation stack
-        Navigator.pushAndRemoveUntil(
+        // Navigate to security setup after wallet creation
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const WalletScreen()),
-          (route) => false,
+          MaterialPageRoute(
+            builder: (context) => SecuritySetupScreen(
+              onSuccess: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WalletScreen()),
+                  (route) => false,
+                );
+              },
+            ),
+          ),
         );
         _showSuccess('Wallet created successfully with $_selectedMnemonicLength-word mnemonic!');
       }
@@ -117,10 +127,20 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
         _nameController.text.trim(),
       );
       if (mounted) {
-        Navigator.pushAndRemoveUntil(
+        // Navigate to security setup after wallet import
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const WalletScreen()),
-          (route) => false,
+          MaterialPageRoute(
+            builder: (context) => SecuritySetupScreen(
+              onSuccess: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WalletScreen()),
+                  (route) => false,
+                );
+              },
+            ),
+          ),
         );
         _showSuccess('Wallet imported successfully with ${filteredWords.length}-word mnemonic!');
       }
@@ -156,10 +176,20 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
         _nameController.text.trim(),
       );
       if (mounted) {
-        Navigator.pushAndRemoveUntil(
+        // Navigate to security setup after private key import
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const WalletScreen()),
-          (route) => false,
+          MaterialPageRoute(
+            builder: (context) => SecuritySetupScreen(
+              onSuccess: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => const WalletScreen()),
+                  (route) => false,
+                );
+              },
+            ),
+          ),
         );
         _showSuccess('Wallet imported successfully!');
       }

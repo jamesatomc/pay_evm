@@ -3,12 +3,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/token_model.dart';
 import '../models/wallet_model.dart';
 import 'network_service.dart';
+import 'wallet_service.dart';
+import 'price_service.dart';
 
 class TokenService {
   static const String _tokensKey = 'custom_tokens';
   static const String _tokenBalancesKey = 'token_balances';
   
   final NetworkService _networkService = NetworkService();
+  final PriceService _priceService = PriceService();
 
   // Get all custom tokens for a specific network
   Future<List<CustomTokenModel>> getCustomTokens(String networkId) async {
@@ -182,8 +185,9 @@ class TokenService {
   // Get token balance for a wallet
   Future<double> getTokenBalance(String contractAddress, String walletAddress, String networkId) async {
     try {
-      // This would normally call the token contract's balanceOf method
-      // For now, return 0.0 as placeholder
+      // TODO: Implement actual ERC-20 token balance fetching
+      // This would normally call the token contract's balanceOf method using web3dart
+      // For now, return 0.0 until proper blockchain integration is implemented
       return 0.0;
     } catch (e) {
       print('Error getting token balance: $e');
@@ -199,16 +203,41 @@ class TokenService {
     for (final token in tokens) {
       double balance;
       if (token.isNative) {
-        // For native tokens, we might already have the balance
-        balance = token.balance;
+        // For native tokens, get actual balance from WalletService
+        final walletService = WalletService();
+        try {
+          balance = await walletService.getEthBalance(wallet.address);
+        } catch (e) {
+          print('Error getting native token balance: $e');
+          balance = 0.0;
+        } finally {
+          walletService.dispose();
+        }
       } else {
         balance = await getTokenBalance(token.contractAddress, wallet.address, networkId);
       }
       
-      tokensWithBalance.add(token.copyWith(balance: balance));
+      // Calculate USD price for the token using real-time prices
+      double price = await _getTokenPrice(token.symbol);
+      
+      tokensWithBalance.add(token.copyWith(
+        balance: balance,
+        price: price,
+      ));
     }
     
     return tokensWithBalance;
+  }
+
+  // Real-time token prices (API required)
+  Future<double> _getTokenPrice(String symbol) async {
+    try {
+      return await _priceService.getTokenPrice(symbol);
+    } catch (e) {
+      print('Error getting price for $symbol: $e');
+      // Return 0 if we can't get real price - better than fake prices
+      return 0.0;
+    }
   }
 
   // Search for popular tokens (this could be enhanced with a token list API)

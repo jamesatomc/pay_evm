@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/wallet_service.dart';
 import '../services/token_service.dart';
+import '../services/price_service.dart';
 import '../models/wallet_model.dart';
 import '../models/network_model.dart';
 import '../models/token_model.dart';
@@ -25,9 +26,11 @@ class WalletScreen extends StatefulWidget {
 class WalletScreenState extends State<WalletScreen> {
   final WalletService _walletService = WalletService();
   final TokenService _tokenService = TokenService();
+  final PriceService _priceService = PriceService();
   WalletModel? _currentWallet;
   NetworkModel? _currentNetwork;
   double _ethBalance = 0.0;
+  double _totalBalance = 0.0;
   bool _isLoading = true;
   List<CustomTokenModel> _tokens = [];
 
@@ -47,8 +50,13 @@ class WalletScreenState extends State<WalletScreen> {
     setState(() => _isLoading = true);
     
     try {
+      print('=== Loading wallet data ===');
       final wallet = await _walletService.getActiveWallet();
       final network = await _walletService.getCurrentNetwork();
+      
+      print('Current network: ${network.name} (${network.id})');
+      print('Chain ID: ${network.chainId}');
+      print('RPC URL: ${network.rpcUrl}');
       
       if (wallet != null) {
         print('Loading balance for wallet: ${wallet.address} on network: ${network.name}');
@@ -58,19 +66,36 @@ class WalletScreenState extends State<WalletScreen> {
         final tokens = await _tokenService.getTokenBalances(wallet, network.id);
         
         print('Balance loaded: $balance ${network.currencySymbol}');
+        print('Tokens loaded: ${tokens.length} tokens');
         setState(() {
           _currentWallet = wallet;
           _currentNetwork = network;
           _ethBalance = balance;
           _tokens = tokens;
         });
+        
+        // Calculate total balance with real-time prices
+        try {
+          final totalBalance = await _calculateTotalBalance();
+          setState(() {
+            _totalBalance = totalBalance;
+          });
+          print('Total balance calculated: \$${_totalBalance.toStringAsFixed(2)}');
+        } catch (e) {
+          print('Error calculating total balance: $e');
+          setState(() {
+            _totalBalance = 0.0; // Set to 0 if can't get real prices
+          });
+        }
       } else {
         print('No wallet found, setting network: ${network.name}');
         setState(() {
           _currentNetwork = network;
           _tokens = [];
+          _totalBalance = 0.0;
         });
       }
+      print('=== Wallet data loaded successfully ===');
     } catch (e) {
       print('Error loading wallet: $e');
     } finally {
@@ -79,9 +104,9 @@ class WalletScreenState extends State<WalletScreen> {
   }
 
   // Calculate total balance including native token
-  double get _totalBalance {
-    // Use current network's currency price (demo prices)
-    double nativeTokenPrice = _getNativeTokenPrice();
+  Future<double> _calculateTotalBalance() async {
+    // Use current network's currency price (real-time prices)
+    double nativeTokenPrice = await _getNativeTokenPrice();
     double total = _ethBalance * nativeTokenPrice;
     
     // Add custom token values
@@ -94,24 +119,18 @@ class WalletScreenState extends State<WalletScreen> {
     return total;
   }
 
-  double _getNativeTokenPrice() {
-    if (_currentNetwork == null) return 1800.0; // Default ETH price
+  Future<double> _getNativeTokenPrice() async {
+    if (_currentNetwork == null) return 0.0; // Return 0 if no network
     
-    switch (_currentNetwork!.currencySymbol) {
-      case 'ETH':
-        return 1800.0;
-      case 'BNB':
-        return 220.0;
-      case 'MATIC':
-        return 0.8;
-      case 'AVAX':
-        return 25.0;
-      case 'FTM':
-        return 0.25;
-      case 'sBTC':
-        return 30000.0; // Signet BTC price similar to BTC
-      default:
-        return 1.0; // Default for unknown tokens
+    try {
+      final symbol = _currentNetwork!.currencySymbol;
+      final price = await _priceService.getTokenPrice(symbol);
+      print('Price for $symbol: \$${price.toStringAsFixed(2)}');
+      return price;
+    } catch (e) {
+      print('Error getting price for ${_currentNetwork!.currencySymbol}: $e');
+      // Return 0 instead of fake prices
+      return 0.0;
     }
   }
 
@@ -122,7 +141,30 @@ class WalletScreenState extends State<WalletScreen> {
     );
     
     if (result == true) {
-      await _loadWallet(); // Reload to update network and balance
+      // Force refresh network connection and reload wallet data
+      setState(() {
+        _isLoading = true;
+        // Clear old data immediately to show loading state
+        _ethBalance = 0.0;
+        _tokens = [];
+      });
+      
+      try {
+        // Get the new network and switch to it
+        final newNetwork = await _walletService.getCurrentNetwork();
+        print('Switched to network: ${newNetwork.name}');
+        
+        // Update UI with new network info immediately
+        setState(() {
+          _currentNetwork = newNetwork;
+        });
+        
+        // Reload all wallet data with new network
+        await _loadWallet();
+      } catch (e) {
+        print('Error after network switch: $e');
+        setState(() => _isLoading = false);
+      }
     }
   }
 

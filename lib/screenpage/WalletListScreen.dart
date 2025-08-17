@@ -40,6 +40,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
+      //eng
       _showError('เกิดข้อผิดพลาดในการโหลดกระเป๋า: $e');
     }
   }

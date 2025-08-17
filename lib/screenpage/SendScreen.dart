@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../services/wallet_service.dart';
 import '../services/token_service.dart';
+import '../services/security_service.dart';
 import '../models/wallet_model.dart';
 import '../models/network_model.dart';
 import '../models/token_model.dart';
+import 'PinVerificationScreen.dart';
 
 class SendScreen extends StatefulWidget {
   final WalletModel wallet;
@@ -100,7 +102,34 @@ class _SendScreenState extends State<SendScreen> {
     super.dispose();
   }
 
+  // Verify PIN before transaction
+  Future<bool> _verifyPinForTransaction() async {
+    try {
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PinVerificationScreen(
+            title: 'Authorize Transaction',
+            subtitle: 'Enter your PIN to authorize this transaction',
+            onPinVerified: (pin) => Navigator.pop(context, true),
+            onCancel: () => Navigator.pop(context, false),
+          ),
+        ),
+      );
+      return result ?? false;
+    } catch (e) {
+      print('Error verifying PIN: $e');
+      return false;
+    }
+  }
+
   Future<void> _sendTransaction() async {
+    // First verify PIN before proceeding with transaction
+    final pinVerified = await _verifyPinForTransaction();
+    if (!pinVerified) {
+      return; // User cancelled or PIN verification failed
+    }
+
     if (_selectedToken == null) {
       _showError('Please select a token');
       return;
