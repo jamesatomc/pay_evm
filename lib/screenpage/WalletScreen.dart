@@ -446,20 +446,6 @@ class WalletScreenState extends State<WalletScreen> {
     }
   }
 
-  // Debug function to clear all tokens
-  Future<void> _clearAllTokens() async {
-    await _tokenService.clearAllTokens();
-    await _loadWallet();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('All custom tokens cleared'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    }
-  }
-
   Widget _buildAssetList() {
     if (_tokens.isEmpty) {
       return const EmptyState(

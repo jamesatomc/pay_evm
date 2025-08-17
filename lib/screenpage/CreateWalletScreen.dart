@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../services/wallet_service.dart';
 
 
@@ -19,11 +18,22 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
   late TabController _tabController;
   bool _isLoading = false;
   int _selectedTab = 0; // 0: Create, 1: Import Mnemonic, 2: Import Private Key
+  int _mnemonicWordCount = 0;
+  int _selectedMnemonicLength = 12; // Default to 12 words
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _mnemonicController.addListener(_updateMnemonicWordCount);
+  }
+
+  void _updateMnemonicWordCount() {
+    final words = _mnemonicController.text.trim().split(' ');
+    final filteredWords = words.where((word) => word.isNotEmpty).toList();
+    setState(() {
+      _mnemonicWordCount = filteredWords.length;
+    });
   }
 
   @override
@@ -45,10 +55,13 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
     setState(() => _isLoading = true);
 
     try {
-      final wallet = await _walletService.createNewWallet(_nameController.text.trim());
+      final wallet = await _walletService.createNewWallet(
+        _nameController.text.trim(),
+        wordCount: _selectedMnemonicLength,
+      );
       if (mounted) {
         Navigator.pop(context, wallet);
-        _showSuccess('Wallet created successfully!');
+        _showSuccess('Wallet created successfully with $_selectedMnemonicLength-word mnemonic!');
       }
     } catch (e) {
       if (mounted) {
@@ -70,20 +83,40 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
       return;
     }
 
+    // Validate mnemonic phrase length
+    final mnemonicWords = _mnemonicController.text.trim().split(' ');
+    final filteredWords = mnemonicWords.where((word) => word.isNotEmpty).toList();
+    
+    if (filteredWords.length != 12 && filteredWords.length != 24) {
+      _showError('Mnemonic phrase must contain exactly 12 or 24 words. Currently: ${filteredWords.length} words');
+      return;
+    }
+
+    // Additional validation for common issues
+    final cleanMnemonic = filteredWords.join(' ').toLowerCase();
+    if (cleanMnemonic.contains('  ') || cleanMnemonic.trim() != cleanMnemonic) {
+      _showError('Please check for extra spaces in the mnemonic phrase');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
       final wallet = await _walletService.importWalletFromMnemonic(
-        _mnemonicController.text.trim(),
+        cleanMnemonic, // Use cleaned mnemonic
         _nameController.text.trim(),
       );
       if (mounted) {
         Navigator.pop(context, wallet);
-        _showSuccess('Wallet imported successfully!');
+        _showSuccess('Wallet imported successfully with ${filteredWords.length}-word mnemonic!');
       }
     } catch (e) {
       if (mounted) {
-        _showError('Error importing wallet: $e');
+        String errorMessage = 'Error importing wallet: $e';
+        if (e.toString().contains('Invalid mnemonic')) {
+          errorMessage = 'Invalid mnemonic phrase. Please check the words and try again.';
+        }
+        _showError(errorMessage);
       }
     } finally {
       setState(() => _isLoading = false);
@@ -297,10 +330,56 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '• The system will automatically generate a Mnemonic phrase for you\n'
-                  '• Please keep the Mnemonic phrase safe\n'
-                  '• Do not share the Mnemonic phrase with anyone',
+                  '• The system will automatically generate a mnemonic phrase for you\n'
+                  '• Please keep the mnemonic phrase safe and secure\n'
+                  '• Do not share the mnemonic phrase with anyone\n'
+                  '• You can also import wallets with 24-word phrases',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Mnemonic length selector
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Mnemonic Length',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile<int>(
+                        title: const Text('12 words'),
+                        subtitle: const Text('Standard (128-bit)'),
+                        value: 12,
+                        groupValue: _selectedMnemonicLength,
+                        onChanged: (value) {
+                          setState(() => _selectedMnemonicLength = value!);
+                        },
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                    Expanded(
+                      child: RadioListTile<int>(
+                        title: const Text('24 words'),
+                        subtitle: const Text('High Security (256-bit)'),
+                        value: 24,
+                        groupValue: _selectedMnemonicLength,
+                        onChanged: (value) {
+                          setState(() => _selectedMnemonicLength = value!);
+                        },
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -315,13 +394,59 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
       children: [
         TextField(
           controller: _mnemonicController,
-          decoration: const InputDecoration(
-            labelText: 'Mnemonic Phrase (12 words)',
-            border: OutlineInputBorder(),
-            prefixIcon: Icon(Icons.vpn_key),
-            helperText: 'Enter Mnemonic phrase separated by spaces',
+          decoration: InputDecoration(
+            labelText: 'Mnemonic Phrase (12 or 24 words)',
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.vpn_key),
+            suffixIcon: Container(
+              padding: const EdgeInsets.all(12),
+              child: Chip(
+                label: Text(
+                  '$_mnemonicWordCount words',
+                  style: const TextStyle(fontSize: 11),
+                ),
+                backgroundColor: _mnemonicWordCount == 12 || _mnemonicWordCount == 24
+                    ? Colors.green[100]
+                    : _mnemonicWordCount > 0
+                        ? Colors.orange[100]
+                        : Colors.grey[100],
+              ),
+            ),
+            helperText: 'Enter 12 or 24 word mnemonic phrase separated by spaces',
           ),
-          maxLines: 3,
+          maxLines: 4,
+        ),
+        const SizedBox(height: 16),
+        Card(
+          color: Colors.blue[50],
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.info, color: Colors.blue[700], size: 20),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Supported Formats:',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '• 12-word mnemonic phrase (BIP39)\n'
+                  '• 24-word mnemonic phrase (BIP39)\n'
+                  '• Words must be separated by spaces\n'
+                  '• Check spelling carefully before importing\n'
+                  '• Example: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: 16),
         Card(
@@ -334,7 +459,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
                 const SizedBox(width: 8),
                 const Expanded(
                   child: Text(
-                    'Please verify the Mnemonic phrase before proceeding',
+                    'Please verify the mnemonic phrase before proceeding',
                     style: TextStyle(fontSize: 12),
                   ),
                 ),
@@ -398,7 +523,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> with TickerProv
   String _getButtonText() {
     switch (_selectedTab) {
       case 0:
-        return 'Create New Wallet';
+        return 'Create New Wallet ($_selectedMnemonicLength words)';
       case 1:
         return 'Import from Mnemonic';
       case 2:

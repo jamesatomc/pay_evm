@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 import '../models/token_model.dart';
-import '../models/network_model.dart';
 import '../models/wallet_model.dart';
 import 'network_service.dart';
 

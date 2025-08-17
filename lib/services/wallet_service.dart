@@ -72,7 +72,7 @@ class WalletService {
       print('Connection test successful - Chain ID: $chainId');
       
       // Verify chain ID matches expected
-      if (chainId != _currentNetwork!.chainId) {
+      if (chainId.toInt() != _currentNetwork!.chainId) {
         print('WARNING: Chain ID mismatch! Expected: ${_currentNetwork!.chainId}, Got: $chainId');
       }
     } catch (e) {
@@ -118,25 +118,76 @@ class WalletService {
   }
 
   // Generate new wallet with mnemonic
-  Future<WalletModel> createNewWallet(String walletName) async {
-    // Generate mnemonic phrase
-    final mnemonic = bip39.generateMnemonic();
+  Future<WalletModel> createNewWallet(String walletName, {int wordCount = 12}) async {
+    print('=== Creating new wallet: $walletName with $wordCount words ===');
     
-    // Generate seed from mnemonic
+    // Generate mnemonic phrase (12 or 24 words)
+    final mnemonic = wordCount == 24 
+        ? bip39.generateMnemonic(strength: 256) // 256 bits = 24 words
+        : bip39.generateMnemonic(strength: 128); // 128 bits = 12 words
+    print('Generated new mnemonic ($wordCount words): ${mnemonic.substring(0, 20)}...');
+    
+    return _createWalletFromMnemonic(mnemonic, walletName);
+  }
+
+  // Helper method to create wallet from existing mnemonic
+  Future<WalletModel> _createWalletFromMnemonic(String mnemonic, String walletName) async {
+    // Generate seed from mnemonic using BIP39
     final seed = bip39.mnemonicToSeed(mnemonic);
+    print('Generated seed length: ${seed.length}');
+    print('Seed preview: ${seed.take(8).map((b) => b.toRadixString(16).padLeft(2, '0')).join()}...');
     
-    // Generate private key from seed (simplified approach)
-    final digest = SHA256Digest();
-    final privateKeyBytes = Uint8List(32);
-    final seedBytes = Uint8List.fromList(seed);
-    digest.process(seedBytes);
-    digest.doFinal(privateKeyBytes, 0);
+    // Use BIP32-like derivation but simplified
+    // Take first 32 bytes of seed as private key (this is standard for simple wallets)
+    var privateKeyBytes = Uint8List.fromList(seed.take(32).toList());
+    
+    // If the direct seed doesn't give a valid private key, use HMAC-SHA256
+    if (_isInvalidPrivateKey(privateKeyBytes)) {
+      print('Direct seed invalid, using HMAC derivation...');
+      
+      // Use HMAC-SHA256 with seed as key and a derivation path as message
+      final hmac = HMac(SHA256Digest(), 64);
+      final key = Uint8List.fromList(seed);
+      final message = Uint8List.fromList('m/44\'/60\'/0\'/0/0'.codeUnits); // Standard Ethereum path
+      
+      hmac.init(KeyParameter(key));
+      hmac.update(message, 0, message.length);
+      
+      privateKeyBytes = Uint8List(32);
+      hmac.doFinal(privateKeyBytes, 0);
+      
+      // If still invalid, add entropy
+      var attemptCount = 0;
+      while (_isInvalidPrivateKey(privateKeyBytes) && attemptCount < 10) {
+        final modifiedMessage = Uint8List.fromList([
+          ...message,
+          attemptCount & 0xFF,
+          (attemptCount >> 8) & 0xFF,
+        ]);
+        
+        hmac.reset();
+        hmac.init(KeyParameter(key));
+        hmac.update(modifiedMessage, 0, modifiedMessage.length);
+        hmac.doFinal(privateKeyBytes, 0);
+        
+        attemptCount++;
+        print('HMAC attempt $attemptCount');
+      }
+      
+      if (attemptCount >= 10) {
+        throw Exception('Failed to generate valid private key from mnemonic');
+      }
+    }
+    
+    print('Final private key preview: ${privateKeyBytes.take(4).map((b) => b.toRadixString(16).padLeft(2, '0')).join()}...');
     
     // Create credentials from private key
     final credentials = EthPrivateKey(privateKeyBytes);
     
     // Get address
-    final address = await credentials.extractAddress();
+    final address = credentials.address;
+    print('Generated new address: ${address.hex}');
+    print('Private key preview: ${privateKeyBytes.take(4).map((b) => b.toRadixString(16).padLeft(2, '0')).join()}...');
     
     final wallet = WalletModel(
       address: address.hex,
@@ -152,40 +203,45 @@ class WalletService {
     return wallet;
   }
 
+  // Validate private key (ensure it's not zero and within secp256k1 curve order)
+  bool _isInvalidPrivateKey(Uint8List privateKey) {
+    // Check if all bytes are zero
+    if (privateKey.every((byte) => byte == 0)) {
+      return true;
+    }
+    
+    // Check if it's too large (greater than secp256k1 curve order)
+    // secp256k1 order: 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+    final maxBytes = [
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE,
+      0xBA, 0xAE, 0xDC, 0xE6, 0xAF, 0x48, 0xA0, 0x3B,
+      0xBF, 0xD2, 0x5E, 0x8C, 0xD0, 0x36, 0x41, 0x41
+    ];
+    
+    for (int i = 0; i < 32; i++) {
+      if (privateKey[i] > maxBytes[i]) {
+        return true;
+      } else if (privateKey[i] < maxBytes[i]) {
+        return false;
+      }
+    }
+    
+    return false; // Equal to max is still valid
+  }
+
   // Import wallet from mnemonic
   Future<WalletModel> importWalletFromMnemonic(String mnemonic, String walletName) async {
     if (!bip39.validateMnemonic(mnemonic)) {
       throw Exception('Invalid mnemonic phrase');
     }
 
-    // Generate seed from mnemonic
-    final seed = bip39.mnemonicToSeed(mnemonic);
-    
-    // Generate private key from seed (simplified approach)
-    final digest = SHA256Digest();
-    final privateKeyBytes = Uint8List(32);
-    final seedBytes = Uint8List.fromList(seed);
-    digest.process(seedBytes);
-    digest.doFinal(privateKeyBytes, 0);
-    
-    // Create credentials from private key
-    final credentials = EthPrivateKey(privateKeyBytes);
-    
-    // Get address
-    final address = await credentials.extractAddress();
-    
-    final wallet = WalletModel(
-      address: address.hex,
-      privateKey: privateKeyBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join(''),
-      mnemonic: mnemonic,
-      name: walletName,
-      createdAt: DateTime.now(),
-    );
+    print('Importing wallet with mnemonic: ${mnemonic.substring(0, 20)}...');
+    final wordCount = mnemonic.split(' ').where((word) => word.isNotEmpty).length;
+    print('Mnemonic word count: $wordCount');
 
-    await _saveWallet(wallet);
-    await _setActiveWallet(wallet.address);
-    
-    return wallet;
+    // Use the same helper method to ensure consistency
+    return _createWalletFromMnemonic(mnemonic, walletName);
   }
 
   // Import wallet from private key
@@ -195,7 +251,8 @@ class WalletService {
       final credentials = EthPrivateKey.fromHex(privateKey);
       
       // Get address
-      final address = await credentials.extractAddress();
+      final address = credentials.address;
+      print('Imported private key address: ${address.hex}');
       
       final wallet = WalletModel(
         address: address.hex,

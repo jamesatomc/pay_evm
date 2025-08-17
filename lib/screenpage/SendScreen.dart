@@ -51,22 +51,20 @@ class _SendScreenState extends State<SendScreen> {
   Future<void> _loadTokens() async {
     try {
       final network = await _walletService.getCurrentNetwork();
-      if (network != null) {
-        final tokens = await _tokenService.getTokenBalances(widget.wallet, network.id);
-        setState(() {
-          _availableTokens = tokens;
-          // Set native token as default
-          _selectedToken = tokens.firstWhere(
-            (token) => token.isNative,
-            orElse: () => tokens.isNotEmpty ? tokens.first : CustomTokenModel.native(
-              name: 'Ethereum',
-              symbol: 'ETH',
-              networkId: network.id,
-            ),
-          );
-          _updateSelectedTokenBalance();
-        });
-      }
+      final tokens = await _tokenService.getTokenBalances(widget.wallet, network.id);
+      setState(() {
+        _availableTokens = tokens;
+        // Set native token as default
+        _selectedToken = tokens.firstWhere(
+          (token) => token.isNative,
+          orElse: () => tokens.isNotEmpty ? tokens.first : CustomTokenModel.native(
+            name: 'Ethereum',
+            symbol: 'ETH',
+            networkId: network.id,
+          ),
+        );
+        _updateSelectedTokenBalance();
+      });
     } catch (e) {
       print('Error loading tokens: $e');
     }
