@@ -349,7 +349,8 @@ class _AddTokenScreenState extends State<AddTokenScreen>
       backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
         title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Text('Add Token'),
             Text(

@@ -151,7 +151,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
         title: const Text('Security Verification'),
         backgroundColor: Colors.transparent,

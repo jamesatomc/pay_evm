@@ -9,7 +9,6 @@ import '../models/token_model.dart';
 import '../utils/app_theme.dart';
 import 'PinVerificationScreen.dart';
 
-
 class SendScreen extends StatefulWidget {
   final WalletModel wallet;
 
@@ -25,11 +24,11 @@ class _SendScreenState extends State<SendScreen> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _gasPriceController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _showScanner = false;
   NetworkModel? _currentNetwork;
-  
+
   // Token selection
   List<CustomTokenModel> _availableTokens = [];
   CustomTokenModel? _selectedToken;
@@ -55,17 +54,22 @@ class _SendScreenState extends State<SendScreen> {
   Future<void> _loadTokens() async {
     try {
       final network = await _walletService.getCurrentNetwork();
-      final tokens = await _tokenService.getTokenBalances(widget.wallet, network.id);
+      final tokens = await _tokenService.getTokenBalances(
+        widget.wallet,
+        network.id,
+      );
       setState(() {
         _availableTokens = tokens;
         // Set native token as default
         _selectedToken = tokens.firstWhere(
           (token) => token.isNative,
-          orElse: () => tokens.isNotEmpty ? tokens.first : CustomTokenModel.native(
-            name: 'Ethereum',
-            symbol: 'ETH',
-            networkId: network.id,
-          ),
+          orElse: () => tokens.isNotEmpty
+              ? tokens.first
+              : CustomTokenModel.native(
+                  name: 'Ethereum',
+                  symbol: 'ETH',
+                  networkId: network.id,
+                ),
         );
         _updateSelectedTokenBalance();
       });
@@ -76,10 +80,12 @@ class _SendScreenState extends State<SendScreen> {
 
   Future<void> _updateSelectedTokenBalance() async {
     if (_selectedToken == null) return;
-    
+
     try {
       if (_selectedToken!.isNative) {
-        final balance = await _walletService.getEthBalance(widget.wallet.address);
+        final balance = await _walletService.getEthBalance(
+          widget.wallet.address,
+        );
         setState(() => _selectedTokenBalance = balance);
       } else {
         final balance = await _tokenService.getTokenBalance(
@@ -163,9 +169,9 @@ class _SendScreenState extends State<SendScreen> {
     try {
       final gasPriceGwei = double.tryParse(_gasPriceController.text.trim());
       print('Gas price from UI: $gasPriceGwei Gwei');
-      
+
       String txHash;
-      
+
       if (_selectedToken!.isNative) {
         // Send native token (ETH, BNB, etc.)
         txHash = await _walletService.sendEth(
@@ -178,7 +184,9 @@ class _SendScreenState extends State<SendScreen> {
         // Send ERC-20 token
         // TODO: Implement ERC-20 token transfer
         // For now, show a placeholder message
-        throw Exception('ERC-20 token transfers will be implemented in the next update');
+        throw Exception(
+          'ERC-20 token transfers will be implemented in the next update',
+        );
       }
 
       if (mounted) {
@@ -213,32 +221,30 @@ class _SendScreenState extends State<SendScreen> {
 
   void _setMaxAmount() {
     if (_selectedToken == null) return;
-    
+
     // Set max amount minus estimated gas fee for native token
     double maxAmount;
     if (_selectedToken!.isNative) {
-      maxAmount = (_selectedTokenBalance - 0.001).clamp(0.0, _selectedTokenBalance);
+      maxAmount = (_selectedTokenBalance - 0.001).clamp(
+        0.0,
+        _selectedTokenBalance,
+      );
     } else {
-      maxAmount = _selectedTokenBalance; // For ERC-20 tokens, can send full amount
+      maxAmount =
+          _selectedTokenBalance; // For ERC-20 tokens, can send full amount
     }
     _amountController.text = maxAmount.toStringAsFixed(6);
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
@@ -249,9 +255,15 @@ class _SendScreenState extends State<SendScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
-        title: const Text('Send Money'),
-        centerTitle: true,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [const Text('Send Money')],
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -267,7 +279,10 @@ class _SendScreenState extends State<SendScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.account_balance_wallet, color: Theme.of(context).primaryColor),
+                        Icon(
+                          Icons.account_balance_wallet,
+                          color: Theme.of(context).primaryColor,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           widget.wallet.name,
@@ -287,9 +302,9 @@ class _SendScreenState extends State<SendScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Token selector
             Card(
               child: Padding(
@@ -299,7 +314,10 @@ class _SendScreenState extends State<SendScreen> {
                   children: [
                     const Text(
                       'Select Token',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Container(
@@ -322,57 +340,81 @@ class _SendScreenState extends State<SendScreen> {
                               _updateSelectedTokenBalance();
                             }
                           },
-                          items: _availableTokens.map<DropdownMenuItem<CustomTokenModel>>((CustomTokenModel token) {
-                            return DropdownMenuItem<CustomTokenModel>(
-                              value: token,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: token.isNative 
-                                          ? Theme.of(context).primaryColor.withOpacity(0.1)
-                                          : Theme.of(context).cardColor.withOpacity(0.5),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        token.symbol.substring(0, token.symbol.length > 2 ? 2 : token.symbol.length).toUpperCase(),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          token.symbol,
-                                          style: const TextStyle(fontWeight: FontWeight.w600),
-                                        ),
-                                        Text(
-                                          token.name,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Theme.of(context).textTheme.bodySmall?.color,
+                          items: _availableTokens
+                              .map<DropdownMenuItem<CustomTokenModel>>((
+                                CustomTokenModel token,
+                              ) {
+                                return DropdownMenuItem<CustomTokenModel>(
+                                  value: token,
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: token.isNative
+                                              ? Theme.of(
+                                                  context,
+                                                ).primaryColor.withOpacity(0.1)
+                                              : Theme.of(
+                                                  context,
+                                                ).cardColor.withOpacity(0.5),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                        child: Center(
+                                          child: Text(
+                                            token.symbol
+                                                .substring(
+                                                  0,
+                                                  token.symbol.length > 2
+                                                      ? 2
+                                                      : token.symbol.length,
+                                                )
+                                                .toUpperCase(),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              token.symbol,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            Text(
+                                              token.name,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Theme.of(
+                                                  context,
+                                                ).textTheme.bodySmall?.color,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Text(
+                                        token.balance.toStringAsFixed(6),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    token.balance.toStringAsFixed(6),
-                                    style: const TextStyle(fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                                );
+                              })
+                              .toList(),
                         ),
                       ),
                     ),
@@ -380,9 +422,9 @@ class _SendScreenState extends State<SendScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Recipient address
             TextField(
               controller: _addressController,
@@ -394,12 +436,13 @@ class _SendScreenState extends State<SendScreen> {
                   icon: const Icon(Icons.qr_code_scanner),
                   onPressed: _scanQRCode,
                 ),
-                helperText: '${_currentNetwork?.name ?? 'Ethereum'} Address (0x...)',
+                helperText:
+                    '${_currentNetwork?.name ?? 'Ethereum'} Address (0x...)',
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Amount
             TextField(
               controller: _amountController,
@@ -411,13 +454,16 @@ class _SendScreenState extends State<SendScreen> {
                   onPressed: _setMaxAmount,
                   child: const Text('MAX'),
                 ),
-                helperText: 'Available: ${_selectedTokenBalance.toStringAsFixed(6)} ${_selectedToken?.symbol ?? 'ETH'}',
+                helperText:
+                    'Available: ${_selectedTokenBalance.toStringAsFixed(6)} ${_selectedToken?.symbol ?? 'ETH'}',
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Gas price
             TextField(
               controller: _gasPriceController,
@@ -427,11 +473,13 @@ class _SendScreenState extends State<SendScreen> {
                 prefixIcon: Icon(Icons.local_gas_station),
                 helperText: 'Gas Fee (Recommended 20-50 Gwei)',
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Warning
             Card(
               color: Theme.of(context).brightness == Brightness.dark
@@ -441,11 +489,7 @@ class _SendScreenState extends State<SendScreen> {
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.warning, 
-                      color: AppTheme.warningColor, 
-                      size: 20,
-                    ),
+                    Icon(Icons.warning, color: AppTheme.warningColor, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -462,9 +506,9 @@ class _SendScreenState extends State<SendScreen> {
                 ),
               ),
             ),
-            
+
             const Spacer(),
-            
+
             // Send button
             CustomButton(
               text: 'Send ${_selectedToken?.symbol ?? 'ETH'}',
@@ -488,9 +532,7 @@ class _SendScreenState extends State<SendScreen> {
           onPressed: () => setState(() => _showScanner = false),
         ),
       ),
-      body: MobileScanner(
-        onDetect: _onQRCodeDetected,
-      ),
+      body: MobileScanner(onDetect: _onQRCodeDetected),
     );
   }
 }

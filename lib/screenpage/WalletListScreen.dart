@@ -33,7 +33,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
     try {
       final wallets = await _walletService.getWallets();
       final activeWallet = await _walletService.getActiveWallet();
-      
+
       setState(() {
         _wallets = wallets;
         _activeWallet = activeWallet;
@@ -51,7 +51,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
       await _walletService.switchWallet(address);
       final activeWallet = await _walletService.getActiveWallet();
       setState(() => _activeWallet = activeWallet);
-      
+
       if (mounted) {
         Navigator.pop(context, activeWallet);
         _showSuccess('Wallet switched successfully');
@@ -67,7 +67,9 @@ class _WalletListScreenState extends State<WalletListScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirm Deletion'),
-        content: const Text('Are you sure you want to delete this wallet? This action cannot be undone.'),
+        content: const Text(
+          'Are you sure you want to delete this wallet? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -174,34 +176,34 @@ class _WalletListScreenState extends State<WalletListScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red),
     );
   }
 
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
-        title: const Text('My Wallets'),
-        centerTitle: true,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [const Text('My Wallets')],
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _wallets.isEmpty
-              ? _buildEmptyState()
-              : _buildWalletList(),
+          ? _buildEmptyState()
+          : _buildWalletList(),
     );
   }
 
@@ -219,7 +221,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
           Text(
             'No wallets yet',
             style: TextStyle(
-              fontSize: 18, 
+              fontSize: 18,
               color: Theme.of(context).textTheme.titleMedium?.color,
             ),
           ),
@@ -247,7 +249,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
           margin: const EdgeInsets.only(bottom: 8),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: isActive 
+              backgroundColor: isActive
                   ? Theme.of(context).primaryColor
                   : Theme.of(context).disabledColor,
               child: Icon(
@@ -261,7 +263,10 @@ class _WalletListScreenState extends State<WalletListScreen> {
                 Expanded(child: Text(wallet.name)),
                 if (isActive)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.green,
                       borderRadius: BorderRadius.circular(12),
@@ -320,7 +325,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
                       Icon(Icons.delete, color: AppTheme.errorColor),
                       const SizedBox(width: 8),
                       Text(
-                        'Delete Wallet', 
+                        'Delete Wallet',
                         style: TextStyle(color: AppTheme.errorColor),
                       ),
                     ],

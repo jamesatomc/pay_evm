@@ -27,12 +27,12 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
 
   Future<void> _loadNetworks() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final predefined = _networkService.getPredefinedNetworks();
       final custom = await _networkService.getCustomNetworks();
       final active = await _networkService.getActiveNetwork();
-      
+
       setState(() {
         _predefinedNetworks = predefined;
         _customNetworks = custom;
@@ -50,7 +50,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
     try {
       await _networkService.setActiveNetwork(network.id);
       setState(() => _activeNetwork = network);
-      
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,7 +59,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Return to previous screen
         Navigator.pop(context, true);
       }
@@ -94,32 +94,32 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
 
   Future<bool> _showDeleteConfirmDialog(String networkName) async {
     return await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Deletion'),
-        content: Text('Are you sure you want to delete the network "$networkName"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Deletion'),
+            content: Text(
+              'Are you sure you want to delete the network "$networkName"?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    ) ?? false;
+        ) ??
+        false;
   }
 
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
     }
   }
@@ -127,11 +127,9 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
   Future<void> _addCustomNetwork() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => const AddCustomNetworkScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const AddCustomNetworkScreen()),
     );
-    
+
     if (result == true) {
       await _loadNetworks();
     }
@@ -139,7 +137,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
 
   Widget _buildNetworkTile(NetworkModel network, {bool showMenu = false}) {
     final isActive = _activeNetwork?.id == network.id;
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       elevation: isActive ? 4 : 1,
@@ -179,11 +177,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isActive)
-              const Icon(
-                Icons.check_circle,
-                color: Colors.green,
-              ),
+            if (isActive) const Icon(Icons.check_circle, color: Colors.green),
             if (showMenu)
               PopupMenuButton<String>(
                 onSelected: (value) {
@@ -214,7 +208,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                         Icon(Icons.delete, color: AppTheme.errorColor),
                         const SizedBox(width: 8),
                         Text(
-                          'Delete', 
+                          'Delete',
                           style: TextStyle(color: AppTheme.errorColor),
                         ),
                       ],
@@ -253,29 +247,28 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
               return const SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               );
             },
           ),
         ),
       );
     }
-    
+
     // Default icon
     return CircleAvatar(
       backgroundColor: _getNetworkColor(network),
-      child: Icon(
-        _getNetworkIcon(network),
-        color: Colors.white,
-        size: 20,
-      ),
+      child: Icon(_getNetworkIcon(network), color: Colors.white, size: 20),
     );
   }
 
   Color _getNetworkColor(NetworkModel network) {
     if (network.isCustom) return Colors.blue;
     if (network.isTestnet) return Colors.orange;
-    
+
     switch (network.id) {
       case 'ethereum':
       case 'sepolia':
@@ -293,7 +286,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
   IconData _getNetworkIcon(NetworkModel network) {
     if (network.isCustom) return Icons.lan;
     if (network.isTestnet) return Icons.code;
-    
+
     switch (network.id) {
       case 'ethereum':
       case 'sepolia':
@@ -311,16 +304,15 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
-        title: const Text('Select Network'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _addCustomNetwork,
-            tooltip: 'Add Custom Network',
-          ),
-        ],
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [const Text('Select Network')],
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -341,39 +333,37 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                   ..._predefinedNetworks
                       .where((n) => !n.isTestnet)
                       .map((network) => _buildNetworkTile(network)),
-                  
+
                   // Testnet Networks Section
                   if (_predefinedNetworks.any((n) => n.isTestnet)) ...[
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
                         'Testnet Networks',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     ..._predefinedNetworks
                         .where((n) => n.isTestnet)
                         .map((network) => _buildNetworkTile(network)),
                   ],
-                  
+
                   // Custom Networks Section
                   if (_customNetworks.isNotEmpty) ...[
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Text(
                         'Custom Networks',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     ..._customNetworks.map(
                       (network) => _buildNetworkTile(network, showMenu: true),
                     ),
                   ],
-                  
+
                   // Add Custom Network Button
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -386,7 +376,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
                 ],
               ),

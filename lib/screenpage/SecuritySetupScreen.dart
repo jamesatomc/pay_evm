@@ -128,7 +128,7 @@ class _SecuritySetupScreenState extends State<SecuritySetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
         title: Text(widget.isSetup ? 'Set Security PIN' : 'Change Security PIN'),
         backgroundColor: Colors.transparent,
