@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web3dart/web3dart.dart';
@@ -28,6 +28,10 @@ class JsonRpcClient extends BaseClient {
     _inner.close();
   }
 }
+
+// Gas price multipliers for medium and high tiers
+const double GAS_PRICE_MEDIUM_MULTIPLIER = 1.2;
+const double GAS_PRICE_HIGH_MULTIPLIER = 1.5;
 
 class WalletService {
   static const String _walletKey = 'wallet_data';
@@ -377,6 +381,48 @@ class WalletService {
     }
   }
 
+  /// Fetches dynamic gas price information for the specified network.
+  ///
+  /// This method switches to the given [networkId], ensures the client is initialized,
+  /// and retrieves the current gas price in Gwei. It returns a map containing
+  /// the following keys: 'low', 'medium', 'high', 'min', and 'max', each mapped to
+  /// a [double] value representing the gas price in Gwei. The 'medium' and 'high'
+  /// values are calculated as 20% and 50% higher than the current price, respectively.
+  ///
+  /// If an error occurs during the fetch, the method returns a default map with
+  /// fallback values: {'low': 0.4, 'medium': 1.1, 'high': 2.6, 'min': 0.4, 'max': 2.6}.
+  ///
+  /// [networkId]: The identifier of the network to fetch gas prices for.
+  /// Returns: A [Map<String, double>] containing gas price tiers in Gwei.
+  /// Exceptions: On error, returns default values and logs the error
+  Future<Map<String, double>> getGasInfo(String networkId) async {
+    await switchNetwork(networkId);
+    await _ensureInitialized();
+    try {
+      final current = (await _web3client!.getGasPrice()).getValueInUnit(EtherUnit.gwei);
+      // Adjust logic: medium = current + 20%, high = current + 50%
+      final medium = current * GAS_PRICE_MEDIUM_MULTIPLIER;
+      final high = current * GAS_PRICE_HIGH_MULTIPLIER;
+      return {
+        'low': double.parse(current.toStringAsFixed(2)),
+        'medium': double.parse(medium.toStringAsFixed(2)),
+        'high': double.parse(high.toStringAsFixed(2)),
+        'min': double.parse(current.toStringAsFixed(2)),
+        'max': double.parse(high.toStringAsFixed(2)),
+      };
+    } catch (e) {
+      debugPrint('Error fetching gas info: $e');
+      // fallback default
+      return {
+        'low': 0.4,
+        'medium': 1.1,
+        'high': 2.6,
+        'min': 0.4,
+        'max': 2.6,
+      };
+    }
+  }
+
   // Delete wallet
   Future<void> deleteWallet(String address) async {
     final prefs = await SharedPreferences.getInstance();
@@ -408,8 +454,13 @@ class WalletService {
     required String toAddress,
     required double amount,
     double? gasPrice, // Gas price in Gwei
+    String? networkId, // Optional network ID to switch before sending
   }) async {
     try {
+      // Switch network if networkId is provided
+      if (networkId != null) {
+        await switchNetwork(networkId);
+      }
       print('Starting transaction...');
       print('=== Sending transaction ===');
       print('From: $fromAddress');
