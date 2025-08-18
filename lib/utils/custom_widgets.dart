@@ -178,6 +178,7 @@ class BalanceCard extends StatelessWidget {
                                         fontSize: isSmall ? 9 : 11,
                                         fontWeight: FontWeight.w600,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),

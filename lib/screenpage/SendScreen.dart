@@ -69,13 +69,13 @@ class _SendScreenState extends State<SendScreen> {
       // gasInfo = {'low': 0.4, 'medium': 1.1, 'high': 2.6, 'min': 0.4, 'max': 2.6}
       setState(() {
         _gasFeeOptions = [
-          {'label': 'Low', 'value': gasInfo['low'] ?? gasInfo['min'] ?? 0.1},
+          {'label': 'Low', 'value': gasInfo['low'] ?? gasInfo['min'] ?? DEFAULT_MIN_GAS_PRICE},
           {'label': 'Medium', 'value': gasInfo['medium'] ?? 1.1},
           {'label': 'High', 'value': gasInfo['high'] ?? gasInfo['max'] ?? 2.6},
         ];
         _selectedGasFeeLabel = 'Medium';
-        _minGasPrice = gasInfo['min'] ?? 0.1;
-        _maxGasPrice = gasInfo['max'] ?? 100.0;
+        _minGasPrice = gasInfo['min'] ?? DEFAULT_MIN_GAS_PRICE;
+        _maxGasPrice = gasInfo['max'] ?? DEFAULT_MAX_GAS_PRICE;
         _gasPriceController.text = (_gasFeeOptions.firstWhere(
           (opt) => opt['label'] == _selectedGasFeeLabel,
           orElse: () => _gasFeeOptions.isNotEmpty
@@ -88,13 +88,13 @@ class _SendScreenState extends State<SendScreen> {
       // fallback default
       setState(() {
         _gasFeeOptions = [
-          {'label': 'Low', 'value': 0.1},
+          {'label': 'Low', 'value': DEFAULT_MIN_GAS_PRICE},
           {'label': 'Medium', 'value': 1.1},
           {'label': 'High', 'value': 2.6},
         ];
         _selectedGasFeeLabel = 'Medium';
-        _minGasPrice = 0.1;
-        _maxGasPrice = 100.0;
+        _minGasPrice = DEFAULT_MIN_GAS_PRICE;
+        _maxGasPrice = DEFAULT_MAX_GAS_PRICE;
         _gasPriceController.text = '1.1';
       });
     }
