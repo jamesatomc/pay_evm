@@ -153,10 +153,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor),
       );
     }
   }
@@ -164,10 +161,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
   void _showSuccess(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.green,
-        ),
+        SnackBar(content: Text(message), backgroundColor: AppTheme.secondaryColor),
       );
     }
   }

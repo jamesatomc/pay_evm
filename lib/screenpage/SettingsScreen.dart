@@ -5,6 +5,7 @@ import '../providers/theme_provider.dart';
 import '../utils/app_theme.dart';
 import '../services/security_service.dart';
 import 'ChangePinScreen.dart';
+import 'MarkdownPage.dart'; // เพิ่มการนำเข้า
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -55,25 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // Test biometric authentication before enabling
         final isAuthenticated = await _securityService.authenticateWithBiometric();
         if (!isAuthenticated) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Row(
-                children: [
-                  Icon(
-                    Icons.error,
-                    color: AppTheme.errorColor,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('Biometric authentication failed'),
-                ],
-              ),
-              backgroundColor: AppTheme.errorColor.withOpacity(0.1),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          );
+          _showError('Biometric authentication failed');
           return;
         }
       }
@@ -84,49 +67,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _biometricEnabled = value;
       });
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.check_circle,
-                color: AppTheme.successColor,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                value 
-                    ? 'Biometric authentication enabled'
-                    : 'Biometric authentication disabled',
-              ),
-            ],
-          ),
-          backgroundColor: AppTheme.successColor.withOpacity(0.1),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+      _showSuccess(
+        value 
+            ? 'Biometric authentication enabled'
+            : 'Biometric authentication disabled',
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(
-                Icons.error,
-                color: AppTheme.errorColor,
-              ),
-              const SizedBox(width: 8),
-              Text('Failed to toggle biometric: $e'),
-            ],
-          ),
-          backgroundColor: AppTheme.errorColor.withOpacity(0.1),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      _showError('Failed to toggle biometric: $e');
     }
   }
 
@@ -335,9 +282,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Read our privacy policy',
             Icons.privacy_tip_outlined,
             () {
-              // TODO: Open privacy policy
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Privacy policy coming soon')),
+              // เปิดหน้า markdown
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const MarkdownPage(
+                    title: 'Privacy Policy',
+                    assetPath: 'assets/privacy_policy.md',
+                  ),
+                ),
               );
             },
           ),
@@ -348,9 +300,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Read our terms of service',
             Icons.description_outlined,
             () {
-              // TODO: Open terms of service
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Terms of service coming soon')),
+              // เปิดหน้า markdown
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const MarkdownPage(
+                    title: 'Terms of Service',
+                    assetPath: 'assets/terms_of_service.md',
+                  ),
+                ),
               );
             },
           ),
@@ -399,6 +356,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
           : null,
       onTap: onTap,
       contentPadding: EdgeInsets.zero,
+    );
+  }
+
+// Error handling
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppTheme.secondaryColor),
     );
   }
 }
