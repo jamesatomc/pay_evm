@@ -570,8 +570,13 @@ class _SendScreenState extends State<SendScreen> {
                         if (label != null) {
                           setState(() {
                             _selectedGasFeeLabel = label;
-                            final selected = _gasFeeOptions.firstWhere((opt) => opt['label'] == label);
-                            _gasPriceController.text = selected['value'].toString();
+                            final selected = _gasFeeOptions.firstWhere(
+                              (opt) => opt['label'] == label, 
+                              orElse: () => {'label': '', 'value': 0.0},
+                            );
+                            if (selected != null) {
+                              _gasPriceController.text = selected['value'].toString();
+                            }
                           });
                         }
                       },
