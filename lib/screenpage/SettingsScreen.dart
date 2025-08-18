@@ -359,7 +359,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // Add simple notification helpers (aligned with CreateWalletScreen style)
+// Error handling
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor),

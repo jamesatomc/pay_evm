@@ -53,12 +53,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
 
       // Show success message
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Switched to network ${network.name}'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        _showSuccess('Switched to network ${network.name}');
 
         // Return to previous screen
         Navigator.pop(context, true);
@@ -77,12 +72,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
       if (success) {
         await _loadNetworks();
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Deleted network ${network.name}'),
-              backgroundColor: Colors.orange,
-            ),
-          );
+          _showSuccess('Deleted network ${network.name}');
         }
       } else {
         _showError('Unable to delete network');
@@ -119,7 +109,15 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
   void _showError(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
+        SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor),
+      );
+    }
+  }
+
+  void _showSuccess(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: AppTheme.secondaryColor),
       );
     }
   }
