@@ -135,6 +135,19 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
     }
   }
 
+  Future<void> _editCustomNetwork(NetworkModel network) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddCustomNetworkScreen(network: network),
+      ),
+    );
+
+    if (result == true) {
+      await _loadNetworks();
+    }
+  }
+
   Widget _buildNetworkTile(NetworkModel network, {bool showMenu = false}) {
     final isActive = _activeNetwork?.id == network.id;
 
@@ -183,7 +196,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
                 onSelected: (value) {
                   switch (value) {
                     case 'edit':
-                      // TODO: Implement edit functionality
+                      _editCustomNetwork(network);
                       break;
                     case 'delete':
                       _deleteCustomNetwork(network);
