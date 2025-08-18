@@ -44,53 +44,30 @@ class _ChangePinScreenState extends State<ChangePinScreen> {
           
           if (mounted) {
             // Show success message
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: AppTheme.successColor,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text('PIN changed successfully'),
-                  ],
-                ),
-                backgroundColor: AppTheme.successColor.withOpacity(0.1),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            );
+            _showSuccess('PIN changed successfully');
             
             // Navigate back to settings
             Navigator.of(context).pop();
           }
         } catch (e) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    Icon(
-                      Icons.error,
-                      color: AppTheme.errorColor,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('Failed to change PIN: $e'),
-                  ],
-                ),
-                backgroundColor: AppTheme.errorColor.withOpacity(0.1),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            );
+            _showError('Failed to change PIN: $e');
           }
         }
       },
+    );
+  }
+
+  // Simple notification helpers (consistent with other screens)
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: AppTheme.secondaryColor),
     );
   }
 }

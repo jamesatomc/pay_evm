@@ -44,7 +44,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _shakeAnimation = Tween(begin: -1.0, end: 1.0).animate(
+    _shakeAnimation = Tween(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _shakeController, curve: Curves.elasticIn),
     );
   }
