@@ -67,6 +67,9 @@ dependencies:
   # URL launcher for opening external links
   url_launcher: ^6.2.5
   
+  # Markdown rendering
+  flutter_markdown: ^0.6.10
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -119,3 +122,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  assets:
+    - assets/privacy_policy.md
+    - assets/terms_of_service.md

@@ -5,6 +5,7 @@ import '../providers/theme_provider.dart';
 import '../utils/app_theme.dart';
 import '../services/security_service.dart';
 import 'ChangePinScreen.dart';
+import 'MarkdownPage.dart'; // เพิ่มการนำเข้า
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -281,8 +282,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Read our privacy policy',
             Icons.privacy_tip_outlined,
             () {
-              // TODO: Open privacy policy
-              _showSuccess('Privacy policy coming soon');
+              // เปิดหน้า markdown
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const MarkdownPage(
+                    title: 'Privacy Policy',
+                    assetPath: 'assets/privacy_policy.md',
+                  ),
+                ),
+              );
             },
           ),
           const Divider(height: AppTheme.spacingL),
@@ -292,8 +300,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             'Read our terms of service',
             Icons.description_outlined,
             () {
-              // TODO: Open terms of service
-              _showSuccess('Terms of service coming soon');
+              // เปิดหน้า markdown
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const MarkdownPage(
+                    title: 'Terms of Service',
+                    assetPath: 'assets/terms_of_service.md',
+                  ),
+                ),
+              );
             },
           ),
         ],
