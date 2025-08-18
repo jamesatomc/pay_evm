@@ -354,7 +354,7 @@ class _SendScreenState extends State<SendScreen> {
         return AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.warning, color: AppTheme.warningColor),
+              const Icon(Icons.warning, color: AppTheme.warningColor),
               const SizedBox(width: 8),
               Text(title),
             ],
