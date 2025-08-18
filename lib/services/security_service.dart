@@ -1,28 +1,62 @@
+import 'dart:convert';
+import 'dart:math';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:local_auth/local_auth.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
-import 'package:flutter/services.dart';
+import 'package:cryptography/cryptography.dart';
 
 class SecurityService {
   static const String _pinKey = 'user_pin_hash';
+  static const String _pinSaltKey = 'user_pin_salt';
   static const String _biometricEnabledKey = 'biometric_enabled';
   
   final LocalAuthentication _localAuth = LocalAuthentication();
 
-  // Hash PIN for secure storage
-  String _hashPin(String pin) {
-    var bytes = utf8.encode(pin);
-    var digest = sha256.convert(bytes);
-    return digest.toString();
+  // Derive Argon2id hash (returns base64 encoded hash and salt)
+  Future<Map<String, String>> _deriveHashAndSalt(String pin) async {
+    final algorithm = Argon2id(
+      memory: 10 * 1000, // 10 MB
+      parallelism: 2,
+      iterations: 1,
+      hashLength: 32,
+    );
+
+    // generate a 16-byte random salt (nonce)
+    final salt = List<int>.generate(16, (_) => Random.secure().nextInt(256));
+    final secretKey = await algorithm.deriveKeyFromPassword(
+      password: pin,
+      nonce: salt,
+    );
+    final secretBytes = await secretKey.extractBytes();
+    return {
+      'hash': base64.encode(secretBytes),
+      'salt': base64.encode(salt),
+    };
+  }
+
+  // Derive hash with an existing salt (base64 compare)
+  Future<String> _deriveHashWithSalt(String pin, List<int> salt) async {
+    final algorithm = Argon2id(
+      memory: 10 * 1000,
+      parallelism: 2,
+      iterations: 1,
+      hashLength: 32,
+    );
+    final secretKey = await algorithm.deriveKeyFromPassword(
+      password: pin,
+      nonce: salt,
+    );
+    final secretBytes = await secretKey.extractBytes();
+    return base64.encode(secretBytes);
   }
 
   // Set up PIN
   Future<void> setupPin(String pin) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final hashedPin = _hashPin(pin);
-      await prefs.setString(_pinKey, hashedPin);
+      final result = await _deriveHashAndSalt(pin);
+      await prefs.setString(_pinKey, result['hash']!);
+      await prefs.setString(_pinSaltKey, result['salt']!);
     } catch (e) {
       throw Exception('Failed to setup PIN: $e');
     }
@@ -33,10 +67,12 @@ class SecurityService {
     try {
       final prefs = await SharedPreferences.getInstance();
       final storedHash = prefs.getString(_pinKey);
-      if (storedHash == null) return false;
+      final storedSaltBase64 = prefs.getString(_pinSaltKey);
+      if (storedHash == null || storedSaltBase64 == null) return false;
       
-      final inputHash = _hashPin(pin);
-      return storedHash == inputHash;
+      final salt = base64.decode(storedSaltBase64);
+      final derivedHash = await _deriveHashWithSalt(pin, salt);
+      return storedHash == derivedHash;
     } catch (e) {
       return false;
     }
@@ -46,7 +82,8 @@ class SecurityService {
   Future<bool> isPinSetup() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.containsKey(_pinKey);
+      // ensure both hash and salt are present
+      return prefs.containsKey(_pinKey) && prefs.containsKey(_pinSaltKey);
     } catch (e) {
       return false;
     }
@@ -186,6 +223,7 @@ class SecurityService {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_pinKey);
+      await prefs.remove(_pinSaltKey);
       await prefs.remove(_biometricEnabledKey);
     } catch (e) {
       throw Exception('Failed to clear security data: $e');
