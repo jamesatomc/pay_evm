@@ -10,8 +10,8 @@ import '../models/token_model.dart';
 import '../utils/app_theme.dart';
 import 'PinVerificationScreen.dart';
 
-const double DEFAULT_MIN_GAS_PRICE = 0.4;
-const double DEFAULT_MAX_GAS_PRICE = 2.6;
+const double DEFAULT_MIN_GAS_PRICE = 0.1; // More flexible minimum
+const double DEFAULT_MAX_GAS_PRICE = 100.0; // Higher maximum for flexibility
 
 class SendScreen extends StatefulWidget {
   final WalletModel wallet;
@@ -69,13 +69,13 @@ class _SendScreenState extends State<SendScreen> {
       // gasInfo = {'low': 0.4, 'medium': 1.1, 'high': 2.6, 'min': 0.4, 'max': 2.6}
       setState(() {
         _gasFeeOptions = [
-          {'label': 'Low', 'value': gasInfo['low'] ?? gasInfo['min'] ?? 0.4},
+          {'label': 'Low', 'value': gasInfo['low'] ?? gasInfo['min'] ?? DEFAULT_MIN_GAS_PRICE},
           {'label': 'Medium', 'value': gasInfo['medium'] ?? 1.1},
           {'label': 'High', 'value': gasInfo['high'] ?? gasInfo['max'] ?? 2.6},
         ];
         _selectedGasFeeLabel = 'Medium';
-        _minGasPrice = gasInfo['min'] ?? 0.4;
-        _maxGasPrice = gasInfo['max'] ?? 2.6;
+        _minGasPrice = gasInfo['min'] ?? DEFAULT_MIN_GAS_PRICE;
+        _maxGasPrice = gasInfo['max'] ?? DEFAULT_MAX_GAS_PRICE;
         _gasPriceController.text = (_gasFeeOptions.firstWhere(
           (opt) => opt['label'] == _selectedGasFeeLabel,
           orElse: () => _gasFeeOptions.isNotEmpty
@@ -88,13 +88,13 @@ class _SendScreenState extends State<SendScreen> {
       // fallback default
       setState(() {
         _gasFeeOptions = [
-          {'label': 'Low', 'value': 0.4},
+          {'label': 'Low', 'value': DEFAULT_MIN_GAS_PRICE},
           {'label': 'Medium', 'value': 1.1},
           {'label': 'High', 'value': 2.6},
         ];
         _selectedGasFeeLabel = 'Medium';
-        _minGasPrice = 0.4;
-        _maxGasPrice = 2.6;
+        _minGasPrice = DEFAULT_MIN_GAS_PRICE;
+        _maxGasPrice = DEFAULT_MAX_GAS_PRICE;
         _gasPriceController.text = '1.1';
       });
     }
@@ -239,15 +239,32 @@ class _SendScreenState extends State<SendScreen> {
       final gasPriceGwei = double.tryParse(_gasPriceController.text.trim());
       print('Gas price from UI: $gasPriceGwei Gwei');
 
-      // Check that gasPrice is within the range supported by the network
-      if (gasPriceGwei == null ||
-          gasPriceGwei < _minGasPrice ||
-          gasPriceGwei > _maxGasPrice) {
-        final minGas = (_minGasPrice == 0.0) ? DEFAULT_MIN_GAS_PRICE : _minGasPrice;
-        final maxGas = (_maxGasPrice == 0.0) ? DEFAULT_MAX_GAS_PRICE : _maxGasPrice;
-        _showError('Gas price must be between $minGas and $maxGas Gwei for this chain');
+      // Check that gasPrice is valid (just ensure it's a positive number)
+      if (gasPriceGwei == null || gasPriceGwei <= 0) {
+        _showError('Gas price must be a positive number');
         setState(() => _isLoading = false);
         return;
+      }
+
+      // Show warning if gas price is very low or very high, but don't block the transaction
+      if (gasPriceGwei < 0.1) {
+        final shouldProceed = await _showWarningDialog(
+          'Very Low Gas Price',
+          'Gas price of $gasPriceGwei Gwei is very low. This may cause the transaction to take a long time to confirm or fail. Do you want to proceed?'
+        );
+        if (!shouldProceed) {
+          setState(() => _isLoading = false);
+          return;
+        }
+      } else if (gasPriceGwei > 100) {
+        final shouldProceed = await _showWarningDialog(
+          'Very High Gas Price',
+          'Gas price of $gasPriceGwei Gwei is very high. This will result in high transaction fees. Do you want to proceed?'
+        );
+        if (!shouldProceed) {
+          setState(() => _isLoading = false);
+          return;
+        }
       }
 
       String txHash;
@@ -327,6 +344,36 @@ class _SendScreenState extends State<SendScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: Colors.green),
     );
+  }
+
+  Future<bool> _showWarningDialog(String title, String message) async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.warning, color: AppTheme.warningColor),
+              const SizedBox(width: 8),
+              Text(title),
+            ],
+          ),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: const Text('Proceed'),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+    return result ?? false;
   }
 
   @override
@@ -489,10 +536,11 @@ class _SendScreenState extends State<SendScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 14),
-                                      Expanded(
+                                      Flexible(
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min, // Prevent overflow
                                           children: [
                                             Text(
                                               token.symbol,
@@ -500,6 +548,7 @@ class _SendScreenState extends State<SendScreen> {
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 15,
                                               ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                             Text(
                                               token.name,
@@ -509,10 +558,12 @@ class _SendScreenState extends State<SendScreen> {
                                                   context,
                                                 ).textTheme.bodySmall?.color,
                                               ),
+                                              overflow: TextOverflow.ellipsis,
                                             ),
                                           ],
                                         ),
                                       ),
+                                      const SizedBox(width: 8),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
@@ -645,7 +696,7 @@ class _SendScreenState extends State<SendScreen> {
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.local_gas_station),
                 helperText:
-                    'Range: ${_minGasPrice.toStringAsFixed(2)} - ${_maxGasPrice.toStringAsFixed(2)} Gwei (auto from network)',
+                    'Recommended: ${_minGasPrice.toStringAsFixed(2)} - ${_maxGasPrice.toStringAsFixed(2)} Gwei (custom values allowed)',
               ),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
