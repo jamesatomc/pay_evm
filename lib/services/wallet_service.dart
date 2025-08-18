@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web3dart/web3dart.dart';
@@ -394,7 +395,7 @@ class WalletService {
         'max': double.parse(high.toStringAsFixed(2)),
       };
     } catch (e) {
-      print('Error fetching gas info: $e');
+      debugPrint('Error fetching gas info: $e');
       // fallback default
       return {
         'low': 0.4,

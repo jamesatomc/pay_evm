@@ -165,7 +165,7 @@ class _SendScreenState extends State<SendScreen> {
         ),
       );
     } catch (e) {
-      print('Biometric auth error: $e');
+      debugPrint('Biometric auth error: $e');
     }
 
     if (didAuthenticate) {
@@ -231,7 +231,7 @@ class _SendScreenState extends State<SendScreen> {
       final gasPriceGwei = double.tryParse(_gasPriceController.text.trim());
       print('Gas price from UI: $gasPriceGwei Gwei');
 
-      // เช็คว่า gasPrice อยู่ในช่วงที่ network รองรับ
+      // Check that gasPrice is within the range supported by the network
       if (gasPriceGwei == null || gasPriceGwei < _minGasPrice || gasPriceGwei > _maxGasPrice) {
         _showError('Gas price must be between $_minGasPrice and $_maxGasPrice Gwei for this chain');
         setState(() => _isLoading = false);
@@ -247,7 +247,7 @@ class _SendScreenState extends State<SendScreen> {
           toAddress: _addressController.text.trim(),
           amount: amount,
           gasPrice: gasPriceGwei,
-          networkId: _currentNetwork?.id, // ส่ง networkId ด้วยถ้าจำเป็น
+          networkId: _currentNetwork?.id, // send networkId if necessary
         );
       } else {
         // Send ERC-20 token
