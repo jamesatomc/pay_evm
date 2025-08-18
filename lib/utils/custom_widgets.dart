@@ -103,138 +103,155 @@ class BalanceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-        borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
-        boxShadow: AppTheme.elevatedShadow,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with network and wallet info
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmall = constraints.maxWidth < 350;
+        final isMedium = constraints.maxWidth < 500;
+        return Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: AppTheme.primaryGradient,
+            borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
+            boxShadow: AppTheme.elevatedShadow,
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(isSmall ? AppTheme.spacingM : AppTheme.spacingL),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Total Balance',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+                // Header with network and wallet info
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    if (networkName != null) ...[
-                      GestureDetector(
-                        onTap: onNetworkTap,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppTheme.spacingS,
-                            vertical: AppTheme.spacingXS,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              if (networkIcon != null)
-                                Icon(
-                                  networkIcon,
-                                  size: 12,
-                                  color: Colors.white,
+                    const Text(
+                      'Total Balance',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Flexible(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (networkName != null) ...[
+                            GestureDetector(
+                              onTap: onNetworkTap,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isSmall ? AppTheme.spacingXS : AppTheme.spacingS,
+                                  vertical: AppTheme.spacingXS,
                                 ),
-                              const SizedBox(width: AppTheme.spacingXS),
-                              Text(
-                                networkName!,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (networkIcon != null)
+                                      Icon(
+                                        networkIcon,
+                                        size: isSmall ? 10 : 12,
+                                        color: Colors.white,
+                                      ),
+                                    SizedBox(width: isSmall ? 2 : AppTheme.spacingXS),
+                                    Text(
+                                      networkName!,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: isSmall ? 9 : 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
+                            SizedBox(width: isSmall ? 4 : AppTheme.spacingS),
+                          ],
+                          if (walletName != null)
+                            Text(
+                              walletName!,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isSmall ? 12 : 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
                       ),
-                      const SizedBox(width: AppTheme.spacingS),
-                    ],
-                    if (walletName != null)
-                      Text(
-                        walletName!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                    ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: AppTheme.spacingL),
-            
-            // Balance amount
-            Text(
-              '\$$totalBalance',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                letterSpacing: -0.5,
-              ),
-            ),
-            
-            const SizedBox(height: AppTheme.spacingM),
-            
-            // Wallet address
-            if (walletAddress != null)
-              GestureDetector(
-                onTap: onCopyAddress,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacingM,
-                    vertical: AppTheme.spacingS,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${walletAddress!.substring(0, 6)}...${walletAddress!.substring(walletAddress!.length - 4)}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'monospace',
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingS),
-                      const Icon(
-                        Icons.copy,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                    ],
+                SizedBox(height: isSmall ? AppTheme.spacingS : AppTheme.spacingL),
+
+                // Balance amount
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '\$$totalBalance',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isSmall ? 24 : isMedium ? 28 : 36,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+
+                SizedBox(height: isSmall ? AppTheme.spacingS : AppTheme.spacingM),
+
+                // Wallet address
+                if (walletAddress != null)
+                  GestureDetector(
+                    onTap: onCopyAddress,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isSmall ? AppTheme.spacingS : AppTheme.spacingM,
+                        vertical: AppTheme.spacingS,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${walletAddress!.substring(0, 6)}...${walletAddress!.substring(walletAddress!.length - 4)}',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontFamily: 'monospace',
+                                fontSize: isSmall ? 12 : 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: isSmall ? 4 : AppTheme.spacingS),
+                          const Icon(
+                            Icons.copy,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+      );
+  } 
 }
 
 class AssetListItem extends StatelessWidget {
@@ -329,7 +346,7 @@ class AssetListItem extends StatelessWidget {
             ),
           ],
         ),
-      ),
+      )
     );
   }
 }
