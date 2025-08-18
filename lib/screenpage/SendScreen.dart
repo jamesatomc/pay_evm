@@ -245,7 +245,7 @@ class _SendScreenState extends State<SendScreen> {
           gasPriceGwei > _maxGasPrice) {
         final minGas = (_minGasPrice == 0.0) ? DEFAULT_MIN_GAS_PRICE : _minGasPrice;
         final maxGas = (_maxGasPrice == 0.0) ? DEFAULT_MAX_GAS_PRICE : _maxGasPrice;
-        _showError('Gas price must be between $minGas and $maxGas Gwei for this chain');;
+        _showError('Gas price must be between $minGas and $maxGas Gwei for this chain');
         setState(() => _isLoading = false);
         return;
       }
