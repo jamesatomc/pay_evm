@@ -10,6 +10,9 @@ import '../models/token_model.dart';
 import '../utils/app_theme.dart';
 import 'PinVerificationScreen.dart';
 
+const double DEFAULT_MIN_GAS_PRICE = 0.4;
+const double DEFAULT_MAX_GAS_PRICE = 2.6;
+
 class SendScreen extends StatefulWidget {
   final WalletModel wallet;
 
@@ -73,7 +76,12 @@ class _SendScreenState extends State<SendScreen> {
         _selectedGasFeeLabel = 'Medium';
         _minGasPrice = gasInfo['min'] ?? 0.4;
         _maxGasPrice = gasInfo['max'] ?? 2.6;
-        _gasPriceController.text = (_gasFeeOptions.firstWhere((opt) => opt['label'] == _selectedGasFeeLabel)['value']).toString();
+        _gasPriceController.text = (_gasFeeOptions.firstWhere(
+          (opt) => opt['label'] == _selectedGasFeeLabel,
+          orElse: () => _gasFeeOptions.isNotEmpty
+              ? _gasFeeOptions.first
+              : {'label': 'Medium', 'value': 1.1},
+        )['value']).toString();
       });
     } catch (e) {
       print('Error loading gas info: $e');
@@ -232,8 +240,12 @@ class _SendScreenState extends State<SendScreen> {
       print('Gas price from UI: $gasPriceGwei Gwei');
 
       // Check that gasPrice is within the range supported by the network
-      if (gasPriceGwei == null || gasPriceGwei < _minGasPrice || gasPriceGwei > _maxGasPrice) {
-        _showError('Gas price must be between $_minGasPrice and $_maxGasPrice Gwei for this chain');
+      if (gasPriceGwei == null ||
+          gasPriceGwei < _minGasPrice ||
+          gasPriceGwei > _maxGasPrice) {
+        final minGas = (_minGasPrice == 0.0) ? DEFAULT_MIN_GAS_PRICE : _minGasPrice;
+        final maxGas = (_maxGasPrice == 0.0) ? DEFAULT_MAX_GAS_PRICE : _maxGasPrice;
+        _showError('Gas price must be between $minGas and $maxGas Gwei for this chain');;
         setState(() => _isLoading = false);
         return;
       }
@@ -387,7 +399,11 @@ class _SendScreenState extends State<SendScreen> {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.token, color: Theme.of(context).primaryColor, size: 22),
+                        Icon(
+                          Icons.token,
+                          color: Theme.of(context).primaryColor,
+                          size: 22,
+                        ),
                         const SizedBox(width: 8),
                         const Text(
                           'Select Token',
@@ -401,7 +417,10 @@ class _SendScreenState extends State<SendScreen> {
                     const SizedBox(height: 16),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor.withOpacity(0.05),
                         border: Border.all(
@@ -421,7 +440,9 @@ class _SendScreenState extends State<SendScreen> {
                             }
                           },
                           items: _availableTokens
-                              .map<DropdownMenuItem<CustomTokenModel>>((CustomTokenModel token) {
+                              .map<DropdownMenuItem<CustomTokenModel>>((
+                                CustomTokenModel token,
+                              ) {
                                 return DropdownMenuItem<CustomTokenModel>(
                                   value: token,
                                   child: Row(
@@ -431,21 +452,38 @@ class _SendScreenState extends State<SendScreen> {
                                         height: 36,
                                         decoration: BoxDecoration(
                                           color: token.isNative
-                                              ? Theme.of(context).primaryColor.withOpacity(0.15)
-                                              : Theme.of(context).cardColor.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(18),
+                                              ? Theme.of(
+                                                  context,
+                                                ).primaryColor.withOpacity(0.15)
+                                              : Theme.of(
+                                                  context,
+                                                ).cardColor.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
                                           border: Border.all(
-                                            color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                            color: Theme.of(
+                                              context,
+                                            ).primaryColor.withOpacity(0.2),
                                             width: 1,
                                           ),
                                         ),
                                         child: Center(
                                           child: Text(
-                                            token.symbol.substring(0, token.symbol.length > 2 ? 2 : token.symbol.length).toUpperCase(),
+                                            token.symbol
+                                                .substring(
+                                                  0,
+                                                  token.symbol.length > 2
+                                                      ? 2
+                                                      : token.symbol.length,
+                                                )
+                                                .toUpperCase(),
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 14,
-                                              color: Theme.of(context).primaryColor,
+                                              color: Theme.of(
+                                                context,
+                                              ).primaryColor,
                                             ),
                                           ),
                                         ),
@@ -453,7 +491,8 @@ class _SendScreenState extends State<SendScreen> {
                                       const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               token.symbol,
@@ -466,24 +505,35 @@ class _SendScreenState extends State<SendScreen> {
                                               token.name,
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: Theme.of(context).textTheme.bodySmall?.color,
+                                                color: Theme.of(
+                                                  context,
+                                                ).textTheme.bodySmall?.color,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: Theme.of(context).primaryColor.withOpacity(0.08),
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: Theme.of(
+                                            context,
+                                          ).primaryColor.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                         ),
                                         child: Text(
                                           token.balance.toStringAsFixed(6),
                                           style: TextStyle(
                                             fontWeight: FontWeight.w500,
                                             fontSize: 13,
-                                            color: Theme.of(context).primaryColor,
+                                            color: Theme.of(
+                                              context,
+                                            ).primaryColor,
                                           ),
                                         ),
                                       ),
@@ -562,7 +612,7 @@ class _SendScreenState extends State<SendScreen> {
                         return DropdownMenuItem<String>(
                           value: option['label'],
                           child: Text(
-                            '${option['label']} (${option['value']} Gwei)'
+                            '${option['label']} (${option['value']} Gwei)',
                           ),
                         );
                       }).toList(),
@@ -571,11 +621,12 @@ class _SendScreenState extends State<SendScreen> {
                           setState(() {
                             _selectedGasFeeLabel = label;
                             final selected = _gasFeeOptions.firstWhere(
-                              (opt) => opt['label'] == label, 
+                              (opt) => opt['label'] == label,
                               orElse: () => {'label': '', 'value': 0.0},
                             );
-                            if (selected != null) {
-                              _gasPriceController.text = selected['value'].toString();
+                            if (selected['label'] != '') {
+                              _gasPriceController.text = selected['value']
+                                  .toString();
                             }
                           });
                         }
@@ -593,7 +644,8 @@ class _SendScreenState extends State<SendScreen> {
                 labelText: 'Gas Price (Gwei)',
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.local_gas_station),
-                helperText: 'Range: ${_minGasPrice.toStringAsFixed(2)} - ${_maxGasPrice.toStringAsFixed(2)} Gwei (auto from network)',
+                helperText:
+                    'Range: ${_minGasPrice.toStringAsFixed(2)} - ${_maxGasPrice.toStringAsFixed(2)} Gwei (auto from network)',
               ),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,

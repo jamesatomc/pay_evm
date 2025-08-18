@@ -29,6 +29,10 @@ class JsonRpcClient extends BaseClient {
   }
 }
 
+// Gas price multipliers for medium and high tiers
+const double GAS_PRICE_MEDIUM_MULTIPLIER = 1.2;
+const double GAS_PRICE_HIGH_MULTIPLIER = 1.5;
+
 class WalletService {
   static const String _walletKey = 'wallet_data';
   static const String _activeWalletKey = 'active_wallet';
@@ -377,15 +381,28 @@ class WalletService {
     }
   }
 
-  /// Fetch dynamic gas price information based on the network
+  /// Fetches dynamic gas price information for the specified network.
+  ///
+  /// This method switches to the given [networkId], ensures the client is initialized,
+  /// and retrieves the current gas price in Gwei. It returns a map containing
+  /// the following keys: 'low', 'medium', 'high', 'min', and 'max', each mapped to
+  /// a [double] value representing the gas price in Gwei. The 'medium' and 'high'
+  /// values are calculated as 20% and 50% higher than the current price, respectively.
+  ///
+  /// If an error occurs during the fetch, the method returns a default map with
+  /// fallback values: {'low': 0.4, 'medium': 1.1, 'high': 2.6, 'min': 0.4, 'max': 2.6}.
+  ///
+  /// [networkId]: The identifier of the network to fetch gas prices for.
+  /// Returns: A [Map<String, double>] containing gas price tiers in Gwei.
+  /// Exceptions: On error, returns default values and logs the error
   Future<Map<String, double>> getGasInfo(String networkId) async {
     await switchNetwork(networkId);
     await _ensureInitialized();
     try {
       final current = (await _web3client!.getGasPrice()).getValueInUnit(EtherUnit.gwei);
       // Adjust logic: medium = current + 20%, high = current + 50%
-      final medium = current * 1.2;
-      final high = current * 1.5;
+      final medium = current * GAS_PRICE_MEDIUM_MULTIPLIER;
+      final high = current * GAS_PRICE_HIGH_MULTIPLIER;
       return {
         'low': double.parse(current.toStringAsFixed(2)),
         'medium': double.parse(medium.toStringAsFixed(2)),
