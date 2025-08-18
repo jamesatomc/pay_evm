@@ -4,6 +4,7 @@ import 'package:pay_evm/utils/custom_widgets.dart';
 import 'package:local_auth/local_auth.dart';
 import '../services/wallet_service.dart';
 import '../services/token_service.dart';
+import '../services/transaction_service.dart';
 import '../models/wallet_model.dart';
 import '../models/network_model.dart';
 import '../models/token_model.dart';
@@ -25,6 +26,7 @@ class SendScreen extends StatefulWidget {
 class _SendScreenState extends State<SendScreen> {
   final WalletService _walletService = WalletService();
   final TokenService _tokenService = TokenService();
+  final TransactionService _transactionService = TransactionService();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _gasPriceController = TextEditingController();
@@ -288,6 +290,20 @@ class _SendScreenState extends State<SendScreen> {
       }
 
       if (mounted) {
+        // Save transaction locally for history
+        final pendingTx = _transactionService.createPendingTransaction(
+          hash: txHash,
+          from: widget.wallet.address,
+          to: _addressController.text.trim(),
+          amount: amount,
+          symbol: _selectedToken!.symbol,
+          networkId: _currentNetwork!.id,
+          gasPrice: gasPriceGwei,
+          tokenAddress: _selectedToken!.isNative ? null : _selectedToken!.contractAddress,
+        );
+        
+        await _transactionService.saveLocalTransaction(pendingTx, widget.wallet.address);
+        
         Navigator.pop(context);
         _showSuccess('Transaction successful!\nTx Hash: $txHash');
       }

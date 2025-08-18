@@ -15,6 +15,7 @@ import 'ReceiveScreen.dart';
 import 'NetworkSelectionScreen.dart';
 import 'AddTokenScreen.dart';
 import 'SettingsScreen.dart';
+import 'TransactionHistoryScreen.dart';
 
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
@@ -481,6 +482,14 @@ class WalletScreenState extends State<WalletScreen> {
           backgroundColor: Colors.white,
           iconColor: AppTheme.secondaryColor,
         ),
+        const SizedBox(width: AppTheme.spacingM),
+        ActionButton(
+          label: 'History',
+          icon: Icons.history,
+          onPressed: _currentWallet != null ? _openTransactionHistory : null,
+          backgroundColor: Colors.white,
+          iconColor: Colors.purple,
+        ),
         // const SizedBox(width: AppTheme.spacingM),
         // ActionButton(
         //   label: 'Buy',
@@ -510,6 +519,17 @@ class WalletScreenState extends State<WalletScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => ReceiveScreen(wallet: _currentWallet!),
+        ),
+      );
+    }
+  }
+
+  void _openTransactionHistory() {
+    if (_currentWallet != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TransactionHistoryScreen(wallet: _currentWallet!),
         ),
       );
     }
