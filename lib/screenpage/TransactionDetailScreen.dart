@@ -111,86 +111,92 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isIncoming = widget.transaction.isIncoming(widget.walletAddress);
-    final isSuccessful = widget.transaction.status.isSuccessful;
-    
-    return Scaffold(
-      backgroundColor: AppTheme.surfaceColor,
-      appBar: AppBar(
-        title: const Text('Transaction Details'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          if (widget.transaction.status == TransactionStatus.pending)
-            IconButton(
-              icon: _isRefreshing 
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.textPrimary),
-                      ),
-                    )
-                  : Icon(Icons.refresh, color: AppTheme.textPrimary),
-              onPressed: _isRefreshing ? null : _refreshTransactionStatus,
-              tooltip: 'Refresh Status',
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmallScreen = constraints.maxWidth < 600;
+
+        final isIncoming = widget.transaction.isIncoming(widget.walletAddress);
+        final isSuccessful = widget.transaction.status.isSuccessful;
+        
+        return Scaffold(
+          backgroundColor: AppTheme.surfaceColor,
+          appBar: AppBar(
+            title: const Text('Transaction Details'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+              onPressed: () => Navigator.pop(context),
             ),
-          if (_network?.blockExplorerUrl != null)
-            IconButton(
-              icon: Icon(Icons.open_in_new, color: AppTheme.textPrimary),
-              onPressed: _openInExplorer,
-              tooltip: 'View in Explorer',
+            actions: [
+              if (widget.transaction.status == TransactionStatus.pending)
+                IconButton(
+                  icon: _isRefreshing 
+                      ? SizedBox(
+                          width: isSmallScreen ? 16 : 20,
+                          height: isSmallScreen ? 16 : 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.textPrimary),
+                          ),
+                        )
+                      : Icon(Icons.refresh, color: AppTheme.textPrimary),
+                  onPressed: _isRefreshing ? null : _refreshTransactionStatus,
+                  tooltip: 'Refresh Status',
+                ),
+              if (_network?.blockExplorerUrl != null)
+                IconButton(
+                  icon: Icon(Icons.open_in_new, color: AppTheme.textPrimary),
+                  onPressed: _openInExplorer,
+                  tooltip: 'View in Explorer',
+                ),
+              const SizedBox(width: AppTheme.spacingS),
+            ],
+          ),
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppTheme.spacingM),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Status Header
+                _buildStatusHeader(isIncoming, isSuccessful, isSmallScreen),
+                
+                const SizedBox(height: AppTheme.spacingL),
+                
+                // Amount Section
+                _buildAmountSection(isIncoming, isSmallScreen),
+                
+                const SizedBox(height: AppTheme.spacingL),
+                
+                // Transaction Details
+                _buildDetailsCard(isSmallScreen),
+                
+                const SizedBox(height: AppTheme.spacingL),
+                
+                // Gas Information
+                _buildGasInfoCard(isSmallScreen),
+                
+                const SizedBox(height: AppTheme.spacingL),
+                
+                // Actions
+                _buildActions(isSmallScreen),
+              ],
             ),
-          const SizedBox(width: AppTheme.spacingS),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.spacingM),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Status Header
-            _buildStatusHeader(isIncoming, isSuccessful),
-            
-            const SizedBox(height: AppTheme.spacingL),
-            
-            // Amount Section
-            _buildAmountSection(isIncoming),
-            
-            const SizedBox(height: AppTheme.spacingL),
-            
-            // Transaction Details
-            _buildDetailsCard(),
-            
-            const SizedBox(height: AppTheme.spacingL),
-            
-            // Gas Information
-            _buildGasInfoCard(),
-            
-            const SizedBox(height: AppTheme.spacingL),
-            
-            // Actions
-            _buildActions(),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildStatusHeader(bool isIncoming, bool isSuccessful) {
+  Widget _buildStatusHeader(bool isIncoming, bool isSuccessful, bool isSmallScreen) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -200,15 +206,15 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
         children: [
           // Status Icon
           Container(
-            width: 80,
-            height: 80,
+            width: isSmallScreen ? 60 : 80,
+            height: isSmallScreen ? 60 : 80,
             decoration: BoxDecoration(
               color: _getStatusColor().withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               _getStatusIcon(isIncoming),
-              size: 40,
+              size: isSmallScreen ? 30 : 40,
               color: _getStatusColor(),
             ),
           ),
@@ -221,6 +227,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: AppTheme.textPrimary,
+              fontSize: isSmallScreen ? 18 : 24,
             ),
           ),
           
@@ -239,7 +246,11 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
             child: Text(
               widget.transaction.status.displayName,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white,
+                color: ThemeData.estimateBrightnessForColor(
+                              _getStatusColor()) ==
+                          Brightness.dark
+                      ? Colors.white
+                      : AppTheme.textPrimary,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -259,15 +270,15 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     );
   }
 
-  Widget _buildAmountSection(bool isIncoming) {
+  Widget _buildAmountSection(bool isIncoming, bool isSmallScreen) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -291,6 +302,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
               color: widget.transaction.status.isSuccessful
                   ? (isIncoming ? AppTheme.secondaryColor : AppTheme.textPrimary)
                   : AppTheme.errorColor,
+              fontSize: isSmallScreen ? 20 : 24,
             ),
           ),
           
@@ -308,15 +320,15 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     );
   }
 
-  Widget _buildDetailsCard() {
+  Widget _buildDetailsCard(bool isSmallScreen) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -335,39 +347,39 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           
           const SizedBox(height: AppTheme.spacingL),
           
-          _buildDetailRow('Transaction Hash', widget.transaction.hash, true),
-          _buildDetailRow('From', widget.transaction.from, true),
-          _buildDetailRow('To', widget.transaction.to, true),
+          _buildDetailRow('Transaction Hash', widget.transaction.hash, true, isSmallScreen),
+          _buildDetailRow('From', widget.transaction.from, true, isSmallScreen),
+          _buildDetailRow('To', widget.transaction.to, true, isSmallScreen),
           
           if (widget.transaction.blockNumber > 0)
-            _buildDetailRow('Block Number', widget.transaction.blockNumber.toString()),
+            _buildDetailRow('Block Number', widget.transaction.blockNumber.toString(), false, isSmallScreen),
           
           if (widget.transaction.confirmations > 0)
-            _buildDetailRow('Confirmations', widget.transaction.confirmations.toString())
+            _buildDetailRow('Confirmations', widget.transaction.confirmations.toString(), false, isSmallScreen)
           else if (widget.transaction.status == TransactionStatus.pending)
-            _buildDetailRow('Confirmations', 'Pending...')
+            _buildDetailRow('Confirmations', 'Pending...', false, isSmallScreen)
           else
-            _buildDetailRow('Confirmations', 'Unknown'),
+            _buildDetailRow('Confirmations', 'Unknown', false, isSmallScreen),
           
           if (_network != null)
-            _buildDetailRow('Network', _network!.name),
+            _buildDetailRow('Network', _network!.name, false, isSmallScreen),
           
           if (widget.transaction.tokenAddress != null && widget.transaction.tokenAddress!.isNotEmpty)
-            _buildDetailRow('Token Contract', widget.transaction.tokenAddress!, true),
+            _buildDetailRow('Token Contract', widget.transaction.tokenAddress!, true, isSmallScreen),
         ],
       ),
     );
   }
 
-  Widget _buildGasInfoCard() {
+  Widget _buildGasInfoCard(bool isSmallScreen) {
     return Container(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -388,19 +400,19 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           
           _buildDetailRow('Gas Used', widget.transaction.gasUsed > 0 
               ? widget.transaction.gasUsed.toStringAsFixed(0) 
-              : 'Pending...'),
+              : 'Pending...', false, isSmallScreen),
           _buildDetailRow('Gas Price', widget.transaction.gasPrice > 0 
               ? '${widget.transaction.gasPrice.toStringAsFixed(2)} Gwei' 
-              : 'Unknown'),
+              : 'Unknown', false, isSmallScreen),
           _buildDetailRow('Transaction Fee', widget.transaction.gasFee > 0 
               ? '${widget.transaction.gasFee.toStringAsFixed(6)} ${widget.transaction.symbol}' 
-              : 'Calculating...'),
+              : 'Calculating...', false, isSmallScreen),
         ],
       ),
     );
   }
 
-  Widget _buildDetailRow(String label, String value, [bool copyable = false]) {
+  Widget _buildDetailRow(String label, String value, [bool copyable = false, bool isSmallScreen = false]) {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppTheme.spacingM),
       child: Row(
@@ -413,6 +425,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppTheme.textSecondary,
                 fontWeight: FontWeight.w500,
+                fontSize: isSmallScreen ? 14 : 16,
               ),
             ),
           ),
@@ -425,6 +438,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppTheme.textPrimary,
                       fontFamily: copyable ? 'monospace' : null,
+                      fontSize: isSmallScreen ? 14 : 16,
                     ),
                   ),
                 ),
@@ -447,7 +461,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     );
   }
 
-  Widget _buildActions() {
+  Widget _buildActions(bool isSmallScreen) {
     return Column(
       children: [
         if (_network?.blockExplorerUrl != null)
@@ -459,7 +473,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                 label: const Text('View in Block Explorer'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),

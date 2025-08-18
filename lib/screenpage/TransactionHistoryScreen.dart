@@ -111,92 +111,104 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.surfaceColor,
-      appBar: AppBar(
-        title: const Text('Transaction History'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh, color: AppTheme.textPrimary),
-            onPressed: _isLoading ? null : _refreshTransactions,
-            tooltip: 'Refresh',
-          ),
-          const SizedBox(width: AppTheme.spacingS),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Wallet and Network Info
-          Container(
-            margin: const EdgeInsets.all(AppTheme.spacingM),
-            padding: const EdgeInsets.all(AppTheme.spacingM),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isSmallScreen = constraints.maxWidth < 600;
+
+        return Scaffold(
+          backgroundColor: AppTheme.surfaceColor,
+          appBar: AppBar(
+            title: const Text('Transaction History'),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+              onPressed: () => Navigator.pop(context),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.account_balance_wallet,
-                      color: AppTheme.primaryColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: AppTheme.spacingS),
-                    Text(
-                      widget.wallet.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.refresh, color: AppTheme.textPrimary),
+                onPressed: _isLoading ? null : _refreshTransactions,
+                tooltip: 'Refresh',
+              ),
+              const SizedBox(width: AppTheme.spacingS),
+            ],
+          ),
+          body: Column(
+            children: [
+              // Wallet and Network Info
+              Container(
+                margin: const EdgeInsets.all(AppTheme.spacingM),
+                padding: const EdgeInsets.all(AppTheme.spacingM),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).shadowColor.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                const SizedBox(height: AppTheme.spacingS),
-                Text(
-                  'Address: ${widget.wallet.address}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.textSecondary,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-                if (_currentNetwork != null) ...[
-                  const SizedBox(height: AppTheme.spacingS),
-                  Text(
-                    'Network: ${_currentNetwork!.name}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.textSecondary,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance_wallet,
+                          color: AppTheme.primaryColor,
+                          size: isSmallScreen ? 16 : 20,
+                        ),
+                        const SizedBox(width: AppTheme.spacingS),
+                        Flexible(
+                          child: Text(
+                            widget.wallet.name,
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: isSmallScreen ? 14 : 16,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ],
-            ),
+                    const SizedBox(height: AppTheme.spacingS),
+                    Text(
+                      'Address: ${widget.wallet.address}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppTheme.textSecondary,
+                        fontFamily: 'monospace',
+                        fontSize: isSmallScreen ? 12 : 14,
+                      ),
+                    ),
+                    if (_currentNetwork != null) ...[
+                      const SizedBox(height: AppTheme.spacingS),
+                      Text(
+                        'Network: ${_currentNetwork!.name}',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppTheme.textSecondary,
+                          fontSize: isSmallScreen ? 12 : 14,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              
+              // Transactions List
+              Expanded(
+                child: _buildTransactionsList(isSmallScreen),
+              ),
+            ],
           ),
-          
-          // Transactions List
-          Expanded(
-            child: _buildTransactionsList(),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildTransactionsList() {
+  Widget _buildTransactionsList(bool isSmallScreen) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -238,7 +250,6 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.white,
               ),
             ),
           ],
@@ -262,24 +273,24 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         itemCount: _transactions.length,
         itemBuilder: (context, index) {
           final transaction = _transactions[index];
-          return _buildTransactionItem(transaction);
+          return _buildTransactionItem(transaction, isSmallScreen);
         },
       ),
     );
   }
 
-  Widget _buildTransactionItem(TransactionModel transaction) {
+  Widget _buildTransactionItem(TransactionModel transaction, bool isSmallScreen) {
     final isIncoming = transaction.isIncoming(widget.wallet.address);
     final isSuccessful = transaction.status.isSuccessful;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -288,8 +299,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       child: ListTile(
         contentPadding: const EdgeInsets.all(AppTheme.spacingM),
         leading: Container(
-          width: 48,
-          height: 48,
+          width: isSmallScreen ? 40 : 48,
+          height: isSmallScreen ? 40 : 48,
           decoration: BoxDecoration(
             color: _getTransactionColor(transaction, isIncoming).withOpacity(0.1),
             borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
@@ -297,7 +308,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           child: Icon(
             _getTransactionIcon(transaction, isIncoming),
             color: _getTransactionColor(transaction, isIncoming),
-            size: 24,
+            size: isSmallScreen ? 20 : 24,
           ),
         ),
         title: Row(
@@ -307,6 +318,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 _getTransactionTitle(transaction, isIncoming),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
+                  fontSize: isSmallScreen ? 14 : 16,
                 ),
               ),
             ),
@@ -317,6 +329,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     ? (isIncoming ? AppTheme.secondaryColor : AppTheme.textPrimary)
                     : AppTheme.errorColor,
                 fontWeight: FontWeight.bold,
+                fontSize: isSmallScreen ? 14 : 16,
               ),
             ),
           ],
@@ -360,7 +373,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   child: Text(
                     transaction.status.displayName,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white,
+                      color: ThemeData.estimateBrightnessForColor(
+                                  _getStatusColor(transaction.status)) ==
+                              Brightness.dark
+                          ? Colors.white
+                          : Colors.black,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
