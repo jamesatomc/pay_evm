@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pay_evm/utils/custom_widgets.dart';
+import 'package:local_auth/local_auth.dart';
 import '../services/wallet_service.dart';
 import '../services/token_service.dart';
 import '../models/wallet_model.dart';
@@ -34,20 +35,60 @@ class _SendScreenState extends State<SendScreen> {
   CustomTokenModel? _selectedToken;
   double _selectedTokenBalance = 0.0;
 
+  // Gas fee options (dynamic)
+  List<Map<String, dynamic>> _gasFeeOptions = [];
+  String _selectedGasFeeLabel = '';
+  double _minGasPrice = 0.0;
+  double _maxGasPrice = 0.0;
+
   @override
   void initState() {
     super.initState();
     _loadNetwork();
     _loadTokens();
-    _gasPriceController.text = '20'; // Default gas price in Gwei
+    // _gasPriceController.text = '0.4'; // Default gas price in Gwei
   }
 
   Future<void> _loadNetwork() async {
     try {
       final network = await _walletService.getCurrentNetwork();
       setState(() => _currentNetwork = network);
+      await _loadGasFeeOptions(network);
     } catch (e) {
       print('Error loading network: $e');
+    }
+  }
+
+  Future<void> _loadGasFeeOptions(NetworkModel network) async {
+    try {
+      // get gas price from network (e.g. min, max, suggest)
+      final gasInfo = await _walletService.getGasInfo(network.id);
+      // gasInfo = {'low': 0.4, 'medium': 1.1, 'high': 2.6, 'min': 0.4, 'max': 2.6}
+      setState(() {
+        _gasFeeOptions = [
+          {'label': 'Low', 'value': gasInfo['low'] ?? gasInfo['min'] ?? 0.4},
+          {'label': 'Medium', 'value': gasInfo['medium'] ?? 1.1},
+          {'label': 'High', 'value': gasInfo['high'] ?? gasInfo['max'] ?? 2.6},
+        ];
+        _selectedGasFeeLabel = 'Medium';
+        _minGasPrice = gasInfo['min'] ?? 0.4;
+        _maxGasPrice = gasInfo['max'] ?? 2.6;
+        _gasPriceController.text = (_gasFeeOptions.firstWhere((opt) => opt['label'] == _selectedGasFeeLabel)['value']).toString();
+      });
+    } catch (e) {
+      print('Error loading gas info: $e');
+      // fallback default
+      setState(() {
+        _gasFeeOptions = [
+          {'label': 'Low', 'value': 0.4},
+          {'label': 'Medium', 'value': 1.1},
+          {'label': 'High', 'value': 2.6},
+        ];
+        _selectedGasFeeLabel = 'Medium';
+        _minGasPrice = 0.4;
+        _maxGasPrice = 2.6;
+        _gasPriceController.text = '1.1';
+      });
     }
   }
 
@@ -110,8 +151,28 @@ class _SendScreenState extends State<SendScreen> {
     super.dispose();
   }
 
-  // Verify PIN before transaction
+  // Verify PIN or Biometric before transaction
   Future<bool> _verifyPinForTransaction() async {
+    final LocalAuthentication auth = LocalAuthentication();
+    bool didAuthenticate = false;
+
+    try {
+      didAuthenticate = await auth.authenticate(
+        localizedReason: 'Authorize Transaction',
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+          stickyAuth: false,
+        ),
+      );
+    } catch (e) {
+      print('Biometric auth error: $e');
+    }
+
+    if (didAuthenticate) {
+      return true;
+    }
+
+    // fallback to PIN if biometric fails or not available
     try {
       final result = await Navigator.push<bool>(
         context,
@@ -170,6 +231,13 @@ class _SendScreenState extends State<SendScreen> {
       final gasPriceGwei = double.tryParse(_gasPriceController.text.trim());
       print('Gas price from UI: $gasPriceGwei Gwei');
 
+      // เช็คว่า gasPrice อยู่ในช่วงที่ network รองรับ
+      if (gasPriceGwei == null || gasPriceGwei < _minGasPrice || gasPriceGwei > _maxGasPrice) {
+        _showError('Gas price must be between $_minGasPrice and $_maxGasPrice Gwei for this chain');
+        setState(() => _isLoading = false);
+        return;
+      }
+
       String txHash;
 
       if (_selectedToken!.isNative) {
@@ -179,6 +247,7 @@ class _SendScreenState extends State<SendScreen> {
           toAddress: _addressController.text.trim(),
           amount: amount,
           gasPrice: gasPriceGwei,
+          networkId: _currentNetwork?.id, // ส่ง networkId ด้วยถ้าจำเป็น
         );
       } else {
         // Send ERC-20 token
@@ -307,27 +376,38 @@ class _SendScreenState extends State<SendScreen> {
 
             // Token selector
             Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Select Token',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    Row(
+                      children: [
+                        Icon(Icons.token, color: Theme.of(context).primaryColor, size: 22),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Select Token',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor.withOpacity(0.05),
                         border: Border.all(
                           color: Theme.of(context).dividerColor,
                         ),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<CustomTokenModel>(
@@ -341,73 +421,70 @@ class _SendScreenState extends State<SendScreen> {
                             }
                           },
                           items: _availableTokens
-                              .map<DropdownMenuItem<CustomTokenModel>>((
-                                CustomTokenModel token,
-                              ) {
+                              .map<DropdownMenuItem<CustomTokenModel>>((CustomTokenModel token) {
                                 return DropdownMenuItem<CustomTokenModel>(
                                   value: token,
                                   child: Row(
                                     children: [
                                       Container(
-                                        width: 32,
-                                        height: 32,
+                                        width: 36,
+                                        height: 36,
                                         decoration: BoxDecoration(
                                           color: token.isNative
-                                              ? Theme.of(
-                                                  context,
-                                                ).primaryColor.withOpacity(0.1)
-                                              : Theme.of(
-                                                  context,
-                                                ).cardColor.withOpacity(0.5),
-                                          borderRadius: BorderRadius.circular(
-                                            16,
+                                              ? Theme.of(context).primaryColor.withOpacity(0.15)
+                                              : Theme.of(context).cardColor.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(18),
+                                          border: Border.all(
+                                            color: Theme.of(context).primaryColor.withOpacity(0.2),
+                                            width: 1,
                                           ),
                                         ),
                                         child: Center(
                                           child: Text(
-                                            token.symbol
-                                                .substring(
-                                                  0,
-                                                  token.symbol.length > 2
-                                                      ? 2
-                                                      : token.symbol.length,
-                                                )
-                                                .toUpperCase(),
-                                            style: const TextStyle(
+                                            token.symbol.substring(0, token.symbol.length > 2 ? 2 : token.symbol.length).toUpperCase(),
+                                            style: TextStyle(
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 12,
+                                              fontSize: 14,
+                                              color: Theme.of(context).primaryColor,
                                             ),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: 14),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                          crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               token.symbol,
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.w600,
+                                                fontSize: 15,
                                               ),
                                             ),
                                             Text(
                                               token.name,
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: Theme.of(
-                                                  context,
-                                                ).textTheme.bodySmall?.color,
+                                                color: Theme.of(context).textTheme.bodySmall?.color,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      Text(
-                                        token.balance.toStringAsFixed(6),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w500,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).primaryColor.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          token.balance.toStringAsFixed(6),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 13,
+                                            color: Theme.of(context).primaryColor,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -464,14 +541,54 @@ class _SendScreenState extends State<SendScreen> {
 
             const SizedBox(height: 16),
 
+            // Gas Fee Selector
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.speed, size: 22, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Gas Fee',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButton<String>(
+                      value: _selectedGasFeeLabel,
+                      isExpanded: true,
+                      underline: Container(),
+                      items: _gasFeeOptions.map((option) {
+                        return DropdownMenuItem<String>(
+                          value: option['label'],
+                          child: Text(
+                            '${option['label']} (${option['value']} Gwei)'
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? label) {
+                        if (label != null) {
+                          setState(() {
+                            _selectedGasFeeLabel = label;
+                            final selected = _gasFeeOptions.firstWhere((opt) => opt['label'] == label);
+                            _gasPriceController.text = selected['value'].toString();
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
             // Gas price
             TextField(
               controller: _gasPriceController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Gas Price (Gwei)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.local_gas_station),
-                helperText: 'Gas Fee (Recommended 20-50 Gwei)',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.local_gas_station),
+                helperText: 'Range: ${_minGasPrice.toStringAsFixed(2)} - ${_maxGasPrice.toStringAsFixed(2)} Gwei (auto from network)',
               ),
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,

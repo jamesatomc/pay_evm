@@ -377,6 +377,35 @@ class WalletService {
     }
   }
 
+  /// Fetch dynamic gas price information based on the network
+  Future<Map<String, double>> getGasInfo(String networkId) async {
+    await switchNetwork(networkId);
+    await _ensureInitialized();
+    try {
+      final current = (await _web3client!.getGasPrice()).getValueInUnit(EtherUnit.gwei);
+      // Adjust logic: medium = current + 20%, high = current + 50%
+      final medium = current * 1.2;
+      final high = current * 1.5;
+      return {
+        'low': double.parse(current.toStringAsFixed(2)),
+        'medium': double.parse(medium.toStringAsFixed(2)),
+        'high': double.parse(high.toStringAsFixed(2)),
+        'min': double.parse(current.toStringAsFixed(2)),
+        'max': double.parse(high.toStringAsFixed(2)),
+      };
+    } catch (e) {
+      print('Error fetching gas info: $e');
+      // fallback default
+      return {
+        'low': 0.4,
+        'medium': 1.1,
+        'high': 2.6,
+        'min': 0.4,
+        'max': 2.6,
+      };
+    }
+  }
+
   // Delete wallet
   Future<void> deleteWallet(String address) async {
     final prefs = await SharedPreferences.getInstance();
@@ -408,8 +437,13 @@ class WalletService {
     required String toAddress,
     required double amount,
     double? gasPrice, // Gas price in Gwei
+    String? networkId, // Optional network ID to switch before sending
   }) async {
     try {
+      // Switch network if networkId is provided
+      if (networkId != null) {
+        await switchNetwork(networkId);
+      }
       print('Starting transaction...');
       print('=== Sending transaction ===');
       print('From: $fromAddress');

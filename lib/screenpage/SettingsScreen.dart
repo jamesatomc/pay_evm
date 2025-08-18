@@ -300,19 +300,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 : null,
             contentPadding: EdgeInsets.zero,
           ),
-          const Divider(height: AppTheme.spacingL),
-          _buildSettingItem(
-            context,
-            'Backup Wallet',
-            'Export your wallet seed phrase',
-            Icons.backup_outlined,
-            () {
-              // TODO: Navigate to backup screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Backup feature coming soon')),
-              );
-            },
-          ),
         ],
       ),
     );
