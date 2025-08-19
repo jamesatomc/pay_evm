@@ -70,6 +70,19 @@ class NetworkService {
       iconUrl: 'https://avatars.githubusercontent.com/u/113091135',
     ),
 
+    // Monad Testnet
+    const NetworkModel(
+      id: 'monad-testnet',
+      name: 'Monad Testnet',
+      rpcUrl: 'https://rpc.ankr.com/monad_testnet',
+      chainId: 10143,
+      currencySymbol: 'MON',
+      blockExplorerUrl: 'https://testnet.monadexplorer.com/',
+      isTestnet: true,
+      iconPath: 'assets/icons/monad.png',
+      iconUrl: 'https://avatars.githubusercontent.com/u/191391794?s=200&v=4'
+    ),
+
   ];
 
   // Get all available networks (predefined + custom)
