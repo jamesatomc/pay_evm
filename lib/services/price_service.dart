@@ -12,6 +12,7 @@ class PriceService {
   Map<String, String> _getSymbolToIdMap() {
     return {
       'ETH': 'ethereum',
+  'SUI': 'sui',
       'BTC': 'bitcoin', 
       'SBTC': 'bitcoin', // sBTC (Signet Bitcoin) uses Bitcoin price (uppercase key)
       'BNB': 'binancecoin',
@@ -29,23 +30,9 @@ class PriceService {
   // Get price for a single token
   Future<double> getTokenPrice(String symbol) async {
     try {
-      // Hardcode the mapping for now to test
-      final Map<String, String> symbolToId = {
-        'ETH': 'ethereum',
-        'BTC': 'bitcoin', 
-        'SBTC': 'bitcoin', // sBTC uses Bitcoin price (uppercase key)
-        'BNB': 'binancecoin',
-        'MATIC': 'matic-network',
-        'AVAX': 'avalanche-2',
-        'FTM': 'fantom',
-        'USDC': 'usd-coin',
-        'USDT': 'tether',
-        'DAI': 'dai',
-        'LINK': 'chainlink',
-        'UNI': 'uniswap',
-      };
-      
-      final upperSymbol = symbol.toUpperCase();
+  // Use the centralized mapping so all methods share the same symbol->id map
+  final symbolToId = _getSymbolToIdMap();
+  final upperSymbol = symbol.toUpperCase();
       print('DEBUG: Looking for symbol: $symbol (upper: $upperSymbol)');
       print('DEBUG: Available symbols: ${symbolToId.keys.toList()}');
       print('DEBUG: Map contains SBTC: ${symbolToId.containsKey('SBTC')}');

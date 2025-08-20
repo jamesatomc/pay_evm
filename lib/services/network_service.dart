@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:sui/sui.dart' as sui;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import '../models/network_model.dart';
@@ -9,6 +10,37 @@ class NetworkService {
 
   // Predefined networks
   static final List<NetworkModel> _predefinedNetworks = [
+    // Sui networks
+    NetworkModel(
+      id: 'sui-devnet',
+      name: 'Sui Devnet',
+      rpcUrl: sui.SuiUrls.devnet,
+      chainId: 0,
+      currencySymbol: 'SUI',
+      blockExplorerUrl: null,
+      isTestnet: true,
+      iconPath: 'assets/icons/sui.png',
+    ),
+    NetworkModel(
+      id: 'sui-testnet',
+      name: 'Sui Testnet',
+      rpcUrl: sui.SuiUrls.testnet,
+      chainId: 0,
+      currencySymbol: 'SUI',
+      blockExplorerUrl: null,
+      isTestnet: true,
+      iconPath: 'assets/icons/sui.png',
+    ),
+    NetworkModel(
+      id: 'sui-mainnet',
+      name: 'Sui Mainnet',
+      rpcUrl: sui.SuiUrls.mainnet,
+      chainId: 0,
+      currencySymbol: 'SUI',
+      blockExplorerUrl: null,
+      isTestnet: false,
+      iconPath: 'assets/icons/sui.png',
+    ),
     // Ethereum Mainnet
     const NetworkModel(
       id: 'ethereum',

@@ -211,11 +211,11 @@ class BalanceCard extends StatelessWidget {
                 ),
 
                 // Balance amount
-                FittedBox(
+        FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '\$$totalBalance',
+          currency == 'USD' ? '\$$totalBalance' : '$totalBalance $currency',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: isSmall

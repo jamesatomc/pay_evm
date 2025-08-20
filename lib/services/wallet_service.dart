@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:sui/sui.dart' as sui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,6 +9,7 @@ import 'package:bip39/bip39.dart' as bip39;
 import 'package:pointycastle/export.dart';
 import '../models/wallet_model.dart';
 import '../sui/sui_wallet.dart';
+import '../sui/sui_wallet_service.dart';
 import '../models/network_model.dart';
 import 'network_service.dart';
 
@@ -42,6 +44,15 @@ class WalletService {
   final NetworkService _networkService = NetworkService();
   Web3Client? _web3client;
   NetworkModel? _currentNetwork;
+  SuiWalletService suiService = SuiWalletService();
+
+  // Keep a Sui service instance and small accessors; full Sui logic
+  // (getSuiCoins/getAllSuiCoins/getSuiCoinCount/getSuiBalance) is implemented
+  // inside lib/sui/sui_wallet_service.dart to avoid duplication.
+  
+  // Expose Sui client (nullable) and a quick helper to check availability
+  sui.SuiClient? get suiClient => suiService.suiClient;
+  bool get hasSuiClient => suiService.hasSuiClient;
 
   WalletService();
 
@@ -57,6 +68,10 @@ class WalletService {
         httpClient,
         socketConnector: () => throw UnimplementedError('WebSocket not supported'),
       );
+
+      // If the selected network is a Sui network, initialize Sui client
+  // Initialize Sui service for this network (no-op if not a Sui network)
+  await suiService.initializeForNetwork(_currentNetwork!);
       
       print('Network initialized: ${_currentNetwork!.name} (${_currentNetwork!.rpcUrl})');
       
@@ -104,6 +119,8 @@ class WalletService {
       );
       
       print('Switched to network: ${_currentNetwork!.name}');
+  // Re-init Sui service for new network
+  await suiService.initializeForNetwork(_currentNetwork!);
     } catch (e) {
       print('Error switching network: $e');
     }
@@ -134,8 +151,8 @@ class WalletService {
     print('Generated new mnemonic ($wordCount words): ${mnemonic.substring(0, 20)}...');
     
     if (isSui) {
-      // Create Sui wallet using helper
-      final sui = await importSuiFromMnemonic(mnemonic);
+      // Create Sui wallet using SuiWalletService helper
+      final sui = await suiService.importFromMnemonic(mnemonic);
       final wallet = WalletModel(
         address: sui.address,
         privateKey: sui.privateKey,
@@ -264,7 +281,7 @@ class WalletService {
     print('Mnemonic word count: $wordCount');
 
     if (isSui) {
-      final sui = await importSuiFromMnemonic(mnemonic);
+      final sui = await suiService.importFromMnemonic(mnemonic);
       final wallet = WalletModel(
         address: sui.address,
         privateKey: sui.privateKey,
@@ -287,7 +304,7 @@ class WalletService {
       {bool isSui = false, SuiSignatureScheme? suiScheme}) async {
     try {
       if (isSui) {
-        final sui = await importSuiFromPrivateKey(privateKey,
+        final sui = await suiService.importFromPrivateKey(privateKey,
             scheme: suiScheme ?? SuiSignatureScheme.ed25519);
 
         final wallet = WalletModel(
@@ -432,6 +449,20 @@ class WalletService {
       print('=== End error details ===');
       return 0.0;
     }
+  }
+
+  // Get Sui balance (native SUI token) via JSON-RPC call.
+  // This is best-effort: different Sui RPC providers may return slightly different shapes.
+  // We attempt common response shapes and always catch errors to avoid crashes.
+  Future<double> getSuiBalance(String address) async {
+  await _ensureInitialized();
+  return await suiService.getSuiBalance(address);
+  }
+
+  // Delegate Sui coin count to the Sui service implementation.
+  Future<int> getSuiCoinCount(String address) async {
+    await _ensureInitialized();
+    return await suiService.getSuiCoinCount(address);
   }
 
   /// Fetches dynamic gas price information for the specified network.

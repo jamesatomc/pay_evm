@@ -281,6 +281,10 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
     if (network.isTestnet) return Colors.orange;
 
     switch (network.id) {
+      case 'sui-devnet':
+      case 'sui-testnet':
+      case 'sui-mainnet':
+        return const Color(0xFF00D1FF); // Sui blue
       case 'ethereum':
       case 'sepolia':
   return AppTheme.primaryColor;
