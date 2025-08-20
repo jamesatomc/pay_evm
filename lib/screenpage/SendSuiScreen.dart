@@ -307,7 +307,7 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
                       children: [
                         Icon(
                           Icons.account_balance_wallet,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -347,7 +347,7 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
                         children: [
                           Icon(
                             Icons.token,
-                            color: Theme.of(context).primaryColor,
+                            color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
                             size: 22,
                           ),
                           const SizedBox(width: 8),
@@ -395,11 +395,11 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
                                           width: 1,
                                         ),
                                       ),
-                                      child: Center(
+                                    child: Center(
                                         child: Text(
                                           token.symbol.toUpperCase(),
                                           style: TextStyle(
-                                            color: Theme.of(context).primaryColor,
+                                            color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -410,16 +410,20 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           Text(
                                             token.name,
+                                            maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(fontSize: 14),
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
                                             token.symbol,
-                                            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+                                            maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
                                           ),
                                         ],
                                       ),

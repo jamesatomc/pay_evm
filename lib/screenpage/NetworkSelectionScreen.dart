@@ -152,7 +152,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       elevation: isActive ? 4 : 1,
-      color: isActive ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+  color: isActive ? (Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor).withOpacity(0.1) : null,
       child: ListTile(
         leading: _buildNetworkAvatar(network),
         title: Text(

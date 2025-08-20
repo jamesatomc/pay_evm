@@ -410,7 +410,10 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info, color: Theme.of(context).primaryColor),
+                        Icon(
+                          Icons.info,
+                          color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           _isSui ? 'Create New Sui Wallet' : 'Create New Wallet',
