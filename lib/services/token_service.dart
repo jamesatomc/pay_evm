@@ -7,6 +7,7 @@ import '../models/wallet_model.dart';
 import 'network_service.dart';
 import 'wallet_service.dart';
 import 'price_service.dart';
+import '../sui/sui_wallet_service.dart';
 
 // Custom HTTP client that adds proper headers for JSON-RPC
 class JsonRpcClient extends BaseClient {
@@ -418,9 +419,115 @@ class TokenService {
 
   // Get token balances for all tokens in a wallet
   Future<List<CustomTokenModel>> getTokenBalances(WalletModel wallet, String networkId) async {
-    final tokens = await getAllTokens(networkId);
     final tokensWithBalance = <CustomTokenModel>[];
-    
+
+    // If this is a Sui network, fetch Sui coin objects and map them to tokens
+    if (networkId.toLowerCase().contains('sui')) {
+      final suiService = SuiWalletService();
+
+      try {
+        // Ensure Sui client initialized for the network
+        final ns = NetworkService();
+        final n = await ns.getNetworkById(networkId) ?? await ns.getActiveNetwork();
+        await suiService.initializeForNetwork(n);
+
+        final coins = await suiService.getAllSuiCoins(wallet.address);
+
+        // Aggregate balances by coin type
+        final Map<String, BigInt> balanceByType = {};
+        for (final c in coins) {
+          try {
+            dynamic coin = c;
+            // Attempt common shapes
+            String? type;
+            dynamic balField;
+            if (coin is Map) {
+              type = coin['coinType'] ?? coin['type'] ?? coin['coin_type'] ?? coin['coinType'];
+              balField = coin['balance'] ?? coin['value'] ?? coin['amount'] ?? coin['coinObject']['balance'];
+            } else {
+              // try dynamic access
+              try {
+                type = coin.coinType as String?;
+              } catch (_) {}
+              try {
+                balField = coin.balance;
+              } catch (_) {}
+            }
+
+            if (type == null) type = 'unknown';
+
+            BigInt bal = BigInt.zero;
+            if (balField is String) {
+              bal = BigInt.tryParse(balField) ?? BigInt.zero;
+            } else if (balField is int) {
+              bal = BigInt.from(balField);
+            } else if (balField is BigInt) {
+              bal = balField;
+            } else if (balField is num) {
+              bal = BigInt.from(balField.toInt());
+            }
+
+            balanceByType[type] = (balanceByType[type] ?? BigInt.zero) + bal;
+          } catch (e) {
+            // ignore malformed coin entries
+            print('Error parsing coin entry: $e');
+          }
+        }
+
+        // Convert aggregated balances to CustomTokenModel list
+        for (final entry in balanceByType.entries) {
+          final type = entry.key;
+          final total = entry.value;
+
+          // Convert base units to human amount (1 SUI = 1e9)
+          final double human = total.toDouble() / 1000000000.0;
+
+          String symbol = type;
+          String name = type;
+          bool isNative = false;
+          int decimals = 9;
+
+          if (type.contains('sui::SUI') || type.toLowerCase().contains('::sui::sui')) {
+            symbol = 'SUI';
+            name = 'SUI';
+            isNative = true;
+            decimals = 9;
+          } else {
+            // Try to extract short symbol from Move type like '0x...::module::Name'
+            final parts = type.split('::');
+            if (parts.isNotEmpty) symbol = parts.last;
+            name = symbol;
+            isNative = false;
+            decimals = 9; // Default for Sui tokens
+          }
+
+          final price = await _getTokenPrice(symbol);
+
+          tokensWithBalance.add(CustomTokenModel(
+            contractAddress: type,
+            name: name,
+            symbol: symbol,
+            decimals: decimals,
+            iconUrl: null,
+            isNative: isNative,
+            networkId: networkId,
+            balance: human,
+            price: price,
+          ));
+        }
+
+        return tokensWithBalance;
+      } catch (e) {
+        print('Error fetching Sui coins: $e');
+        return [];
+      } finally {
+        suiService.dispose();
+      }
+    }
+
+    // Default: EVM-style tokens + native
+    final tokens = await getAllTokens(networkId);
+
     for (final token in tokens) {
       double balance;
       if (token.isNative) {
@@ -437,16 +544,16 @@ class TokenService {
       } else {
         balance = await getTokenBalance(token.contractAddress, wallet.address, networkId);
       }
-      
+
       // Calculate USD price for the token using real-time prices
       double price = await _getTokenPrice(token.symbol);
-      
+
       tokensWithBalance.add(token.copyWith(
         balance: balance,
         price: price,
       ));
     }
-    
+
     return tokensWithBalance;
   }
 

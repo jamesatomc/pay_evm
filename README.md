@@ -5,12 +5,15 @@ A Flutter-based cryptocurrency wallet supporting multiple blockchain networks wi
 ## ✨ Features
 
 ### 🔗 Network Support
+
 - **Pre-configured Networks**: Support for major blockchain networks
   - BNB Smart Chain (Mainnet & Testnet)
   - Polygon (Mainnet & Mumbai Testnet)
   - Avalanche (C-Chain & Fuji Testnet)
   - Fantom (Opera & Testnet)
   - Ethereum (Mainnet & Sepolia)
+
+  - Sui (Devnet / Testnet / Mainnet) — Move-based network support
 
 - **Custom Networks**: Add your own blockchain networks
   - Custom RPC URLs
@@ -19,7 +22,14 @@ A Flutter-based cryptocurrency wallet supporting multiple blockchain networks wi
   - Custom block explorers
   - Edit and delete custom networks
 
+### Sui Support
+
+- Native token: SUI (base unit = 1e9 — 1 SUI = 1,000,000,000 base units)
+- Move tokens: The app detects Sui coin objects and lists Move-token balances in the wallet UI. When sending a Move token the app will aggregate multiple coin objects if needed.
+- Network id detection: networks that include `sui` in their id (for example `sui-devnet`) will enable Sui-specific handling and SDK selection.
+
 ### 🎯 Wallet Features
+
 - 🔐 **Secure Wallet Creation**: Generate new wallets with 12-word mnemonic
 - 📥 **Wallet Import**: Import existing wallets using mnemonic phrases
 - 💰 **Balance Display**: View native token balance on selected network
@@ -27,8 +37,9 @@ A Flutter-based cryptocurrency wallet supporting multiple blockchain networks wi
 - 🔄 **Network Switching**: Easy network switching with visual indicators
 
 ### 🎨 User Interface
+
 - 🌈 **Modern Design**: Clean and intuitive interface
-- 🎨 **Color-coded Networks**: 
+- 🎨 **Color-coded Networks**:
   - 🟢 Green for mainnets
   - 🟠 Orange for testnets
   - 🔵 Blue for custom networks
@@ -38,11 +49,18 @@ A Flutter-based cryptocurrency wallet supporting multiple blockchain networks wi
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 - Flutter SDK (3.9.0 or higher)
 - Dart SDK
 - Android Studio / VS Code
 
+Additional notes for Sui
+
+- Ensure `flutter pub get` installs the `sui` Dart package used for Sui RPC and transaction building.
+- Private keys are read from Flutter Secure Storage under the key `pk_<address>` for both EVM and Sui wallets.
+
 ### Installation
+
 1. Clone the repository
 2. Install dependencies: `flutter pub get`
 3. Run the app: `flutter run`
@@ -50,21 +68,24 @@ A Flutter-based cryptocurrency wallet supporting multiple blockchain networks wi
 ## 📖 Usage Guide
 
 ### First Time Setup
+
 1. **Create Wallet**: Tap "Create New Wallet" to generate a new wallet
 2. **Backup Mnemonic**: Save the 12-word mnemonic phrase securely
 3. **Or Import**: Use "Import Wallet" with existing mnemonic
 
 ### Network Management
+
 1. **Switch Networks**: Tap the network indicator in the top-right corner
 2. **Select Network**: Choose from predefined or custom networks
 3. **Add Custom Network**: Tap the "+" button in network selector
 
 ### Adding Custom Networks
+
 1. **Open Network Selector**: Tap network indicator
 2. **Add Network**: Tap the "+" icon
 3. **Fill Details**:
    - Network Name (e.g., "My Custom Chain")
-   - RPC URL (e.g., "https://rpc.example.com")
+   - RPC URL (e.g., "<https://rpc.example.com>")
    - Chain ID (e.g., 1337)
    - Currency Symbol (e.g., "CUSTOM")
    - Block Explorer URL (optional)
@@ -73,6 +94,7 @@ A Flutter-based cryptocurrency wallet supporting multiple blockchain networks wi
 5. **Save Network**: Tap "Add Network"
 
 ### Editing/Deleting Custom Networks
+
 1. **Open Network Selector**
 2. **Find Custom Network** in the "Custom Networks" section
 3. **Tap Menu**: Use the three-dot menu for options
@@ -84,6 +106,11 @@ A Flutter-based cryptocurrency wallet supporting multiple blockchain networks wi
 2. **Test Networks First**: Use testnets before mainnet operations
 3. **Verify Addresses**: Double-check recipient addresses before sending
 4. **Custom Networks**: Verify RPC URLs and chain IDs before adding
+
+Sui-specific notes:
+
+- If your token balances are split across many small coin objects the wallet will attempt to aggregate them for a single transfer; if a transfer still fails consider running a consolidation transaction first.
+- For testing Sui features use `sui-devnet` and small amounts.
 
 ## 🔒 Security Features
 

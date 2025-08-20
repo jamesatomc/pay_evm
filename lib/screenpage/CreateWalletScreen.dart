@@ -28,6 +28,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
   bool _isLoading = false;
   int _mnemonicWordCount = 0;
   int _selectedMnemonicLength = 12; // Default to 12 words
+  bool _isSui = false; // false = EVM, true = Sui (non-EVM)
 
   @override
   void initState() {
@@ -83,6 +84,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
       await _walletService.createNewWallet(
         _nameController.text.trim(),
         wordCount: _selectedMnemonicLength,
+        isSui: _isSui,
       );
       if (mounted) {
         // Navigate to security setup after wallet creation
@@ -153,6 +155,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
       await _walletService.importWalletFromMnemonic(
         cleanMnemonic, // Use cleaned mnemonic
         _nameController.text.trim(),
+        isSui: _isSui,
       );
       if (mounted) {
         // Navigate to security setup after wallet import
@@ -208,6 +211,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
       await _walletService.importWalletFromPrivateKey(
         _privateKeyController.text.trim(),
         _nameController.text.trim(),
+        isSui: _isSui,
       );
       if (mounted) {
         // Navigate to security setup after private key import
@@ -397,7 +401,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
             ),
             const SizedBox(height: 16),
 
-            // Info card
+            // Info card - show Sui-specific guidance when Sui is selected
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -408,19 +412,23 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
                       children: [
                         Icon(Icons.info, color: Theme.of(context).primaryColor),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Create New Wallet',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                        Text(
+                          _isSui ? 'Create New Sui Wallet' : 'Create New Wallet',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      '• The system will automatically generate a mnemonic phrase for you\n'
-                      '• Please keep the mnemonic phrase safe and secure\n'
-                      '• Do not share the mnemonic phrase with anyone\n'
-                      '• You can also import wallets with 24-word phrases',
-                      style: TextStyle(fontSize: 12),
+                    Text(
+                      _isSui
+                          ? '• This will generate a Sui-compatible mnemonic and keypair.\n'
+                              '• Sui uses different signing schemes and address formats than EVM.\n'
+                              '• Keep your mnemonic and private key secure; follow Sui best practices.'
+                          : '• The system will automatically generate a mnemonic phrase for you\n'
+                              '• Please keep the mnemonic phrase safe and secure\n'
+                              '• Do not share the mnemonic phrase with anyone\n'
+                              '• You can also import wallets with 24-word phrases',
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ],
                 ),
@@ -428,52 +436,94 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
             ),
             const SizedBox(height: 16),
 
-            // Mnemonic length selector
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Mnemonic Length',
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<int>(
-                            title: const Text('12 words'),
-                            subtitle: const Text('Standard (128-bit)'),
-                            value: 12,
-                            groupValue: _selectedMnemonicLength,
-                            onChanged: (value) {
-                              setState(() => _selectedMnemonicLength = value!);
-                            },
-                            contentPadding: EdgeInsets.zero,
+            // Mnemonic length selector - EVM shows options, Sui shows Sui-specific note
+            _isSui
+                ? Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Sui Mnemonic',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<int>(
-                            title: const Text('24 words'),
-                            subtitle: const Text('High Security (256-bit)'),
-                            value: 24,
-                            groupValue: _selectedMnemonicLength,
-                            onChanged: (value) {
-                              setState(() => _selectedMnemonicLength = value!);
-                            },
-                            contentPadding: EdgeInsets.zero,
+                          SizedBox(height: 12),
+                          Text(
+                            'A Sui-compatible mnemonic will be generated for you. Sui typically uses standard BIP39 mnemonics with Sui-specific derivation paths.',
+                            style: TextStyle(fontSize: 12),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  )
+                : Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Mnemonic Length',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: RadioListTile<int>(
+                                  title: const Text('12 words'),
+                                  subtitle: const Text('Standard (128-bit)'),
+                                  value: 12,
+                                  groupValue: _selectedMnemonicLength,
+                                  onChanged: (value) {
+                                    setState(() => _selectedMnemonicLength = value!);
+                                  },
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                              Expanded(
+                                child: RadioListTile<int>(
+                                  title: const Text('24 words'),
+                                  subtitle: const Text('High Security (256-bit)'),
+                                  value: 24,
+                                  groupValue: _selectedMnemonicLength,
+                                  onChanged: (value) {
+                                    setState(() => _selectedMnemonicLength = value!);
+                                  },
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
             const SizedBox(height: 24),
+
+            // Network selector (EVM vs Sui)
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('EVM'),
+                    selected: !_isSui,
+                    onSelected: (v) => setState(() => _isSui = !v ? true : false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('Sui'),
+                    selected: _isSui,
+                    onSelected: (v) => setState(() => _isSui = v),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
             // Action button
             CustomButton(
@@ -561,13 +611,18 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      '• 12-word mnemonic phrase (BIP39)\n'
-                      '• 24-word mnemonic phrase (BIP39)\n'
-                      '• Words must be separated by spaces\n'
-                      '• Check spelling carefully before importing\n'
-                      '• Example: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"',
-                      style: TextStyle(fontSize: 12),
+                    Text(
+                      _isSui
+                          ? '• Sui-compatible mnemonics (BIP39) with Sui derivation paths\n'
+                              '• Words must be separated by spaces\n'
+                              '• Check spelling carefully before importing\n'
+                              '• Example: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"'
+                          : '• 12-word mnemonic phrase (BIP39)\n'
+                              '• 24-word mnemonic phrase (BIP39)\n'
+                              '• Words must be separated by spaces\n'
+                              '• Check spelling carefully before importing\n'
+                              '• Example: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"',
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ],
                 ),
@@ -587,7 +642,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Please verify the mnemonic phrase before proceeding',
+                        _isSui ? 'Verify the Sui mnemonic and derivation before importing.' : 'Please verify the mnemonic phrase before proceeding',
                         style: TextStyle(
                           fontSize: 12,
                           color: Theme.of(context).brightness == Brightness.dark
@@ -602,6 +657,28 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
             ),
 
             const SizedBox(height: 24),
+
+            // Network selector (EVM vs Sui)
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('EVM'),
+                    selected: !_isSui,
+                    onSelected: (v) => setState(() => _isSui = !v ? true : false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('Sui'),
+                    selected: _isSui,
+                    onSelected: (v) => setState(() => _isSui = v),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
             // Action button
             CustomButton(
@@ -638,12 +715,14 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
             // Private key input
             TextField(
               controller: _privateKeyController,
-              decoration: const InputDecoration(
-                labelText: 'Private Key',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.lock),
-                helperText: 'Enter Private Key (can start with 0x or not)',
-              ),
+        decoration: InputDecoration(
+        labelText: 'Private Key',
+        border: const OutlineInputBorder(),
+        prefixIcon: const Icon(Icons.lock),
+        helperText: _isSui
+          ? 'Enter Sui private key or seed (follow Sui format)'
+          : 'Enter Private Key (can start with 0x or not)',
+        ),
               obscureText: true,
             ),
             const SizedBox(height: 16),
@@ -676,6 +755,28 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
             ),
 
             const SizedBox(height: 24),
+
+            // Network selector (EVM vs Sui)
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('EVM'),
+                    selected: !_isSui,
+                    onSelected: (v) => setState(() => _isSui = !v ? true : false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('Sui'),
+                    selected: _isSui,
+                    onSelected: (v) => setState(() => _isSui = v),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
             // Action button
             CustomButton(

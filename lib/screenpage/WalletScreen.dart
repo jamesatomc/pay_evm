@@ -11,6 +11,7 @@ import '../utils/custom_widgets.dart';
 import 'CreateWalletScreen.dart';
 import 'WalletListScreen.dart';
 import 'SendScreen.dart';
+import 'SendSuiScreen.dart';
 import 'ReceiveScreen.dart';
 import 'NetworkSelectionScreen.dart';
 import 'AddTokenScreen.dart';
@@ -32,6 +33,7 @@ class WalletScreenState extends State<WalletScreen> {
   WalletModel? _currentWallet;
   NetworkModel? _currentNetwork;
   double _ethBalance = 0.0;
+  double _suiBalance = 0.0;
   double _totalBalance = 0.0;
   bool _isLoading = true;
   List<CustomTokenModel> _tokens = [];
@@ -41,6 +43,7 @@ class WalletScreenState extends State<WalletScreen> {
     super.initState();
     _loadWallet();
   }
+
 
   @override
   void dispose() {
@@ -62,7 +65,17 @@ class WalletScreenState extends State<WalletScreen> {
       
       if (wallet != null) {
         print('Loading balance for wallet: ${wallet.address} on network: ${network.name}');
-        final balance = await _walletService.getEthBalance(wallet.address);
+        double balance = 0.0;
+        if (network.id.toLowerCase().contains('sui')) {
+          balance = await _walletService.getSuiBalance(wallet.address);
+          await _walletService.getSuiCoinCount(wallet.address);
+          setState(() {
+            _suiBalance = balance;
+          });
+        } else {
+          balance = await _walletService.getEthBalance(wallet.address);
+          setState(() => _ethBalance = balance);
+        }
         
         // Load tokens for this wallet and network
         final tokens = await _tokenService.getTokenBalances(wallet, network.id);
@@ -72,7 +85,8 @@ class WalletScreenState extends State<WalletScreen> {
         setState(() {
           _currentWallet = wallet;
           _currentNetwork = network;
-          _ethBalance = balance;
+          // _ethBalance or _suiBalance already set above
+          _tokens = tokens;
           _tokens = tokens;
         });
         
@@ -109,7 +123,10 @@ class WalletScreenState extends State<WalletScreen> {
   Future<double> _calculateTotalBalance() async {
     // Use current network's currency price (real-time prices)
     double nativeTokenPrice = await _getNativeTokenPrice();
-    double total = _ethBalance * nativeTokenPrice;
+  // Use SUI balance for Sui networks, otherwise use ETH/EVM native balance
+  final isSui = _currentNetwork != null && _currentNetwork!.id.toLowerCase().contains('sui');
+  final nativeBalance = isSui ? _suiBalance : _ethBalance;
+  double total = nativeBalance * nativeTokenPrice;
     
     // Add custom token values
     for (final token in _tokens) {
@@ -247,6 +264,10 @@ class WalletScreenState extends State<WalletScreen> {
     if (network.isTestnet) return Icons.code;
     
     switch (network.id) {
+      case 'sui-devnet':
+      case 'sui-testnet':
+      case 'sui-mainnet':
+        return Icons.language; // placeholder for Sui - replace with custom icon if available
       case 'ethereum':
       case 'sepolia':
         return Icons.currency_bitcoin; // Use as Ethereum placeholder
@@ -421,7 +442,8 @@ class WalletScreenState extends State<WalletScreen> {
           children: [
             // Balance Card
             BalanceCard(
-              totalBalance: _totalBalance.toStringAsFixed(2),
+                totalBalance: (_currentNetwork != null && _currentNetwork!.id.toLowerCase().contains('sui') ? _suiBalance : _totalBalance).toStringAsFixed(2),
+                currency: (_currentNetwork != null && _currentNetwork!.id.toLowerCase().contains('sui')) ? 'SUI' : 'USD',
               walletName: _currentWallet?.name,
               walletAddress: _currentWallet?.address,
               networkName: _currentNetwork?.name,
@@ -509,10 +531,15 @@ class WalletScreenState extends State<WalletScreen> {
 
   void _openSendScreen() {
     if (_currentWallet != null) {
+      // Choose SUI UI for Sui networks, otherwise use EVM send UI
+      final isSui = _currentNetwork != null && _currentNetwork!.id.toLowerCase().contains('sui');
+
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => SendScreen(wallet: _currentWallet!),
+          builder: (context) => isSui
+              ? SendSuiScreen(wallet: _currentWallet!)
+              : SendScreen(wallet: _currentWallet!),
         ),
       ).then((_) => _loadWallet()); // Refresh wallet after send
     }

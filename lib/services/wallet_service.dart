@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:sui/sui.dart' as sui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +8,8 @@ import 'package:http/http.dart';
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:pointycastle/export.dart';
 import '../models/wallet_model.dart';
+import '../sui/sui_wallet.dart';
+import '../sui/sui_wallet_service.dart';
 import '../models/network_model.dart';
 import 'network_service.dart';
 
@@ -41,6 +44,15 @@ class WalletService {
   final NetworkService _networkService = NetworkService();
   Web3Client? _web3client;
   NetworkModel? _currentNetwork;
+  SuiWalletService suiService = SuiWalletService();
+
+  // Keep a Sui service instance and small accessors; full Sui logic
+  // (getSuiCoins/getAllSuiCoins/getSuiCoinCount/getSuiBalance) is implemented
+  // inside lib/sui/sui_wallet_service.dart to avoid duplication.
+  
+  // Expose Sui client (nullable) and a quick helper to check availability
+  sui.SuiClient? get suiClient => suiService.suiClient;
+  bool get hasSuiClient => suiService.hasSuiClient;
 
   WalletService();
 
@@ -56,6 +68,10 @@ class WalletService {
         httpClient,
         socketConnector: () => throw UnimplementedError('WebSocket not supported'),
       );
+
+      // If the selected network is a Sui network, initialize Sui client
+  // Initialize Sui service for this network (no-op if not a Sui network)
+  await suiService.initializeForNetwork(_currentNetwork!);
       
       print('Network initialized: ${_currentNetwork!.name} (${_currentNetwork!.rpcUrl})');
       
@@ -103,6 +119,8 @@ class WalletService {
       );
       
       print('Switched to network: ${_currentNetwork!.name}');
+  // Re-init Sui service for new network
+  await suiService.initializeForNetwork(_currentNetwork!);
     } catch (e) {
       print('Error switching network: $e');
     }
@@ -120,8 +138,10 @@ class WalletService {
     }
   }
 
-  // Generate new wallet with mnemonic
-  Future<WalletModel> createNewWallet(String walletName, {int wordCount = 12}) async {
+  // Generate new wallet with mnemonic. If [isSui] is true, create a Sui wallet
+  // (non-EVM). Otherwise create an EVM-compatible wallet (Ethereum).
+  Future<WalletModel> createNewWallet(String walletName,
+      {int wordCount = 12, bool isSui = false}) async {
     print('=== Creating new wallet: $walletName with $wordCount words ===');
     
     // Generate mnemonic phrase (12 or 24 words)
@@ -130,6 +150,22 @@ class WalletService {
         : bip39.generateMnemonic(strength: 128); // 128 bits = 12 words
     print('Generated new mnemonic ($wordCount words): ${mnemonic.substring(0, 20)}...');
     
+    if (isSui) {
+      // Create Sui wallet using SuiWalletService helper
+      final sui = await suiService.importFromMnemonic(mnemonic);
+      final wallet = WalletModel(
+        address: sui.address,
+        privateKey: sui.privateKey,
+        mnemonic: sui.mnemonic,
+        name: walletName,
+        createdAt: DateTime.now(),
+      );
+
+      await _saveWallet(wallet);
+      await _setActiveWallet(wallet.address);
+      return wallet;
+    }
+
     return _createWalletFromMnemonic(mnemonic, walletName);
   }
 
@@ -234,7 +270,8 @@ class WalletService {
   }
 
   // Import wallet from mnemonic
-  Future<WalletModel> importWalletFromMnemonic(String mnemonic, String walletName) async {
+  Future<WalletModel> importWalletFromMnemonic(String mnemonic, String walletName,
+      {bool isSui = false}) async {
     if (!bip39.validateMnemonic(mnemonic)) {
       throw Exception('Invalid mnemonic phrase');
     }
@@ -243,20 +280,53 @@ class WalletService {
     final wordCount = mnemonic.split(' ').where((word) => word.isNotEmpty).length;
     print('Mnemonic word count: $wordCount');
 
-    // Use the same helper method to ensure consistency
+    if (isSui) {
+      final sui = await suiService.importFromMnemonic(mnemonic);
+      final wallet = WalletModel(
+        address: sui.address,
+        privateKey: sui.privateKey,
+        mnemonic: mnemonic,
+        name: walletName,
+        createdAt: DateTime.now(),
+      );
+
+      await _saveWallet(wallet);
+      await _setActiveWallet(wallet.address);
+      return wallet;
+    }
+
+    // Use the same helper method to ensure consistency for EVM
     return _createWalletFromMnemonic(mnemonic, walletName);
   }
 
   // Import wallet from private key
-  Future<WalletModel> importWalletFromPrivateKey(String privateKey, String walletName) async {
+  Future<WalletModel> importWalletFromPrivateKey(String privateKey, String walletName,
+      {bool isSui = false, SuiSignatureScheme? suiScheme}) async {
     try {
-      // Create credentials from private key
+      if (isSui) {
+        final sui = await suiService.importFromPrivateKey(privateKey,
+            scheme: suiScheme ?? SuiSignatureScheme.ed25519);
+
+        final wallet = WalletModel(
+          address: sui.address,
+          privateKey: sui.privateKey,
+          mnemonic: '',
+          name: walletName,
+          createdAt: DateTime.now(),
+        );
+
+        await _saveWallet(wallet);
+        await _setActiveWallet(wallet.address);
+        return wallet;
+      }
+
+      // Create credentials from private key (EVM)
       final credentials = EthPrivateKey.fromHex(privateKey);
-      
+
       // Get address
       final address = credentials.address;
       print('Imported private key address: ${address.hex}');
-      
+
       final wallet = WalletModel(
         address: address.hex,
         privateKey: privateKey,
@@ -267,7 +337,7 @@ class WalletService {
 
       await _saveWallet(wallet);
       await _setActiveWallet(wallet.address);
-      
+
       return wallet;
     } catch (e) {
       throw Exception('Invalid private key');
@@ -379,6 +449,20 @@ class WalletService {
       print('=== End error details ===');
       return 0.0;
     }
+  }
+
+  // Get Sui balance (native SUI token) via JSON-RPC call.
+  // This is best-effort: different Sui RPC providers may return slightly different shapes.
+  // We attempt common response shapes and always catch errors to avoid crashes.
+  Future<double> getSuiBalance(String address) async {
+  await _ensureInitialized();
+  return await suiService.getSuiBalance(address);
+  }
+
+  // Delegate Sui coin count to the Sui service implementation.
+  Future<int> getSuiCoinCount(String address) async {
+    await _ensureInitialized();
+    return await suiService.getSuiCoinCount(address);
   }
 
   /// Fetches dynamic gas price information for the specified network.
