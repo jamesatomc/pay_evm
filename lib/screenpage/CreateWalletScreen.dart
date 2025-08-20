@@ -28,6 +28,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
   bool _isLoading = false;
   int _mnemonicWordCount = 0;
   int _selectedMnemonicLength = 12; // Default to 12 words
+  bool _isSui = false; // false = EVM, true = Sui (non-EVM)
 
   @override
   void initState() {
@@ -83,6 +84,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
       await _walletService.createNewWallet(
         _nameController.text.trim(),
         wordCount: _selectedMnemonicLength,
+        isSui: _isSui,
       );
       if (mounted) {
         // Navigate to security setup after wallet creation
@@ -153,6 +155,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
       await _walletService.importWalletFromMnemonic(
         cleanMnemonic, // Use cleaned mnemonic
         _nameController.text.trim(),
+        isSui: _isSui,
       );
       if (mounted) {
         // Navigate to security setup after wallet import
@@ -208,6 +211,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
       await _walletService.importWalletFromPrivateKey(
         _privateKeyController.text.trim(),
         _nameController.text.trim(),
+        isSui: _isSui,
       );
       if (mounted) {
         // Navigate to security setup after private key import
@@ -475,6 +479,28 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
 
             const SizedBox(height: 24),
 
+            // Network selector (EVM vs Sui)
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('EVM'),
+                    selected: !_isSui,
+                    onSelected: (v) => setState(() => _isSui = !v ? true : false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('Sui'),
+                    selected: _isSui,
+                    onSelected: (v) => setState(() => _isSui = v),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
             // Action button
             CustomButton(
               text: 'Create New Wallet ($_selectedMnemonicLength words)',
@@ -603,6 +629,28 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
 
             const SizedBox(height: 24),
 
+            // Network selector (EVM vs Sui)
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('EVM'),
+                    selected: !_isSui,
+                    onSelected: (v) => setState(() => _isSui = !v ? true : false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('Sui'),
+                    selected: _isSui,
+                    onSelected: (v) => setState(() => _isSui = v),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
             // Action button
             CustomButton(
               text: 'Import from Mnemonic',
@@ -676,6 +724,28 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
             ),
 
             const SizedBox(height: 24),
+
+            // Network selector (EVM vs Sui)
+            Row(
+              children: [
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('EVM'),
+                    selected: !_isSui,
+                    onSelected: (v) => setState(() => _isSui = !v ? true : false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ChoiceChip(
+                    label: const Text('Sui'),
+                    selected: _isSui,
+                    onSelected: (v) => setState(() => _isSui = v),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
 
             // Action button
             CustomButton(

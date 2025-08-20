@@ -71,6 +71,11 @@ dependencies:
   flutter_markdown: ^0.7.7+1
   cryptography: ^2.7.0
 
+  # Sui
+  sui: ^0.3.7
+
+dependency_overrides:
+  pointycastle: 3.7.3
 dev_dependencies:
   flutter_test:
     sdk: flutter

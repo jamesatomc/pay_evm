@@ -7,6 +7,7 @@ import 'package:http/http.dart';
 import 'package:bip39/bip39.dart' as bip39;
 import 'package:pointycastle/export.dart';
 import '../models/wallet_model.dart';
+import '../sui/sui_wallet.dart';
 import '../models/network_model.dart';
 import 'network_service.dart';
 
@@ -120,8 +121,10 @@ class WalletService {
     }
   }
 
-  // Generate new wallet with mnemonic
-  Future<WalletModel> createNewWallet(String walletName, {int wordCount = 12}) async {
+  // Generate new wallet with mnemonic. If [isSui] is true, create a Sui wallet
+  // (non-EVM). Otherwise create an EVM-compatible wallet (Ethereum).
+  Future<WalletModel> createNewWallet(String walletName,
+      {int wordCount = 12, bool isSui = false}) async {
     print('=== Creating new wallet: $walletName with $wordCount words ===');
     
     // Generate mnemonic phrase (12 or 24 words)
@@ -130,6 +133,22 @@ class WalletService {
         : bip39.generateMnemonic(strength: 128); // 128 bits = 12 words
     print('Generated new mnemonic ($wordCount words): ${mnemonic.substring(0, 20)}...');
     
+    if (isSui) {
+      // Create Sui wallet using helper
+      final sui = await importSuiFromMnemonic(mnemonic);
+      final wallet = WalletModel(
+        address: sui.address,
+        privateKey: sui.privateKey,
+        mnemonic: sui.mnemonic,
+        name: walletName,
+        createdAt: DateTime.now(),
+      );
+
+      await _saveWallet(wallet);
+      await _setActiveWallet(wallet.address);
+      return wallet;
+    }
+
     return _createWalletFromMnemonic(mnemonic, walletName);
   }
 
@@ -234,7 +253,8 @@ class WalletService {
   }
 
   // Import wallet from mnemonic
-  Future<WalletModel> importWalletFromMnemonic(String mnemonic, String walletName) async {
+  Future<WalletModel> importWalletFromMnemonic(String mnemonic, String walletName,
+      {bool isSui = false}) async {
     if (!bip39.validateMnemonic(mnemonic)) {
       throw Exception('Invalid mnemonic phrase');
     }
@@ -243,20 +263,53 @@ class WalletService {
     final wordCount = mnemonic.split(' ').where((word) => word.isNotEmpty).length;
     print('Mnemonic word count: $wordCount');
 
-    // Use the same helper method to ensure consistency
+    if (isSui) {
+      final sui = await importSuiFromMnemonic(mnemonic);
+      final wallet = WalletModel(
+        address: sui.address,
+        privateKey: sui.privateKey,
+        mnemonic: mnemonic,
+        name: walletName,
+        createdAt: DateTime.now(),
+      );
+
+      await _saveWallet(wallet);
+      await _setActiveWallet(wallet.address);
+      return wallet;
+    }
+
+    // Use the same helper method to ensure consistency for EVM
     return _createWalletFromMnemonic(mnemonic, walletName);
   }
 
   // Import wallet from private key
-  Future<WalletModel> importWalletFromPrivateKey(String privateKey, String walletName) async {
+  Future<WalletModel> importWalletFromPrivateKey(String privateKey, String walletName,
+      {bool isSui = false, SuiSignatureScheme? suiScheme}) async {
     try {
-      // Create credentials from private key
+      if (isSui) {
+        final sui = await importSuiFromPrivateKey(privateKey,
+            scheme: suiScheme ?? SuiSignatureScheme.ed25519);
+
+        final wallet = WalletModel(
+          address: sui.address,
+          privateKey: sui.privateKey,
+          mnemonic: '',
+          name: walletName,
+          createdAt: DateTime.now(),
+        );
+
+        await _saveWallet(wallet);
+        await _setActiveWallet(wallet.address);
+        return wallet;
+      }
+
+      // Create credentials from private key (EVM)
       final credentials = EthPrivateKey.fromHex(privateKey);
-      
+
       // Get address
       final address = credentials.address;
       print('Imported private key address: ${address.hex}');
-      
+
       final wallet = WalletModel(
         address: address.hex,
         privateKey: privateKey,
@@ -267,7 +320,7 @@ class WalletService {
 
       await _saveWallet(wallet);
       await _setActiveWallet(wallet.address);
-      
+
       return wallet;
     } catch (e) {
       throw Exception('Invalid private key');
