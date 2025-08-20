@@ -26,7 +26,9 @@ class MyApp extends StatelessWidget {
             title: 'Kanari Wallet',
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
-            themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            themeMode: themeProvider.isDarkMode
+                ? ThemeMode.dark
+                : ThemeMode.light,
             home: const AppInitializer(),
           );
         },
@@ -42,7 +44,8 @@ class AppInitializer extends StatefulWidget {
   State<AppInitializer> createState() => _AppInitializerState();
 }
 
-class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObserver {
+class _AppInitializerState extends State<AppInitializer>
+    with WidgetsBindingObserver {
   final WalletService _walletService = WalletService();
   final SecurityService _securityService = SecurityService();
   bool _isLoading = true;
@@ -68,7 +71,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    
+
     switch (state) {
       case AppLifecycleState.paused:
       case AppLifecycleState.inactive:
@@ -78,7 +81,9 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
       case AppLifecycleState.resumed:
         // Check when returning to app
         if (_lastBackgroundTime != null && _isAuthenticated) {
-          final timeDifference = DateTime.now().difference(_lastBackgroundTime!);
+          final timeDifference = DateTime.now().difference(
+            _lastBackgroundTime!,
+          );
           // If away from app for more than 30 seconds, lock app again
           if (timeDifference.inSeconds > 30) {
             setState(() {
@@ -96,7 +101,7 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
     try {
       // Add minimum loading time for better UX
       await Future.delayed(const Duration(milliseconds: 1500));
-      
+
       final wallet = await _walletService.getActiveWallet();
       final isPinSetup = await _securityService.isPinSetup();
 
@@ -117,75 +122,75 @@ class _AppInitializerState extends State<AppInitializer> with WidgetsBindingObse
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
+      final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
       return Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF667eea),
-                Color(0xFF764ba2),
-              ],
-            ),
-          ),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // App Logo with pulse animation
-                TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 1500),
-                  tween: Tween(begin: 0.8, end: 1.0),
-                  builder: (context, scale, child) {
-                    return Transform.scale(
-                      scale: scale,
-                      child: Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 30,
-                              offset: const Offset(0, 15),
+        backgroundColor: AppTheme.surfaceColor,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // App Logo with pulse animation
+              TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 1500),
+                tween: Tween(begin: 0.8, end: 1.0),
+                builder: (context, scale, child) {
+                  return Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppTheme.primaryColor.withOpacity(0.15)
+                            : AppTheme.primaryColor.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(
+                              isDark ? 0.2 : 0.08,
                             ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.account_balance_wallet,
-                          size: 60,
-                          color: Colors.white,
-                        ),
+                            blurRadius: 30,
+                            offset: const Offset(0, 15),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 32),
-                const Text(
-                  'Kanari Wallet',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 48),
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.white.withOpacity(0.8),
+                      child: Icon(
+                        Icons.account_balance_wallet,
+                        size: 60,
+                        color: isDark ? Colors.white : AppTheme.primaryColor,
+                      ),
                     ),
+                  );
+                },
+              ),
+              const SizedBox(height: 32),
+              Text(
+                'Kanari Wallet',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: isDark
+                      ? Colors.white
+                      : Theme.of(context).textTheme.titleLarge?.color ??
+                            AppTheme.textPrimary,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 48),
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isDark
+                        ? AppTheme.primaryColor.withOpacity(0.95)
+                        : AppTheme.primaryColor,
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       );

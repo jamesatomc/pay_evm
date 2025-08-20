@@ -275,7 +275,10 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
               margin: const EdgeInsets.all(AppTheme.spacingM),
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: Colors.white,
+                // Use theme-aware background so it looks correct in dark mode
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Theme.of(context).cardColor
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
                 boxShadow: AppTheme.elevatedShadow,
               ),
@@ -296,8 +299,11 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: Colors.transparent,
+                // Keep selected label visible (white text on colored indicator)
                 labelColor: Colors.white,
-                unselectedLabelColor: AppTheme.textSecondary,
+                // Use theme text color for unselected labels so they remain readable
+                unselectedLabelColor:
+                    Theme.of(context).textTheme.bodySmall?.color ?? AppTheme.textSecondary,
                 labelStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -513,14 +519,16 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
                   child: Chip(
                     label: Text(
                       '$_mnemonicWordCount words',
-                      style: const TextStyle(fontSize: 11),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
+                      ),
                     ),
-                    backgroundColor:
-                        _mnemonicWordCount == 12 || _mnemonicWordCount == 24
-                        ? Theme.of(context).primaryColor.withOpacity(0.1)
+                    backgroundColor: _mnemonicWordCount == 12 || _mnemonicWordCount == 24
+                        ? Theme.of(context).primaryColor.withOpacity(0.12)
                         : _mnemonicWordCount > 0
-                        ? Theme.of(context).colorScheme.error.withOpacity(0.1)
-                        : Theme.of(context).cardColor,
+                            ? Theme.of(context).colorScheme.error.withOpacity(0.12)
+                            : Theme.of(context).cardColor,
                   ),
                 ),
                 helperText:
@@ -539,7 +547,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.info, color: Colors.blue[700], size: 20),
+                        Icon(Icons.info, color: AppTheme.primaryVariant, size: 20),
                         const SizedBox(width: 8),
                         const Expanded(
                           child: Text(

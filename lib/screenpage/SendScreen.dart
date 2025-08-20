@@ -560,9 +560,13 @@ class _SendScreenState extends State<SendScreen> {
                                           children: [
                                             Text(
                                               token.symbol,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 15,
+                                                color: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge
+                                                    ?.color,
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -598,9 +602,10 @@ class _SendScreenState extends State<SendScreen> {
                                           style: TextStyle(
                                             fontWeight: FontWeight.w500,
                                             fontSize: 13,
-                                            color: Theme.of(
-                                              context,
-                                            ).primaryColor,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.color,
                                           ),
                                         ),
                                       ),

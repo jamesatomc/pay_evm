@@ -363,7 +363,8 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
       height: 50,
       child: Center(
         child: _isLoading
-            ? CircularProgressIndicator(
+      ? CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
                 color: AppTheme.primaryColor,
                 strokeWidth: 3,
               )

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:kanaripay/utils/custom_widgets.dart';
+import 'package:kanaripay/utils/app_theme.dart';
 import 'CreateWalletScreen.dart';
-
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -20,12 +20,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    
+
     _slideController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -34,18 +34,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
-    ));
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
 
     // Start animations
     _fadeController.forward();
@@ -63,23 +57,30 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+  final Decoration backgroundDecoration = isDark
+    ? const BoxDecoration(gradient: AppTheme.darkBackgroundGradient)
+        : BoxDecoration(
+            color: AppTheme.lightBackgroundColor,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryColor.withOpacity(0.06),
+                AppTheme.primaryVariant.withOpacity(0.03),
+              ],
+            ),
+          );
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF1a1a2e),
-              Color(0xFF16213e),
-              Color(0xFF0f3460),
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
+        decoration: backgroundDecoration,
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
             child: Column(
               children: [
                 Expanded(
@@ -94,42 +95,42 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Color(0xFF6C63FF),
-                                Color(0xFF5A52E8),
-                              ],
-                            ),
+                            gradient: isDark ? AppTheme.darkBackgroundGradient : null,
+                            color: isDark
+                                ? null
+                                : AppTheme.primaryColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF6C63FF).withOpacity(0.3),
+                                color: AppTheme.primaryColor.withOpacity(
+                                  isDark ? 0.3 : 0.08,
+                                ),
                                 blurRadius: 30,
                                 offset: const Offset(0, 15),
                                 spreadRadius: 5,
                               ),
                             ],
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.account_balance_wallet_outlined,
                             size: 60,
-                            color: Colors.white,
+                            color: isDark
+                                ? Colors.white
+                                : AppTheme.primaryColor,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // App Name
-                        const Text(
+                        Text(
                           'Kanari Wallet',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
-                            color: Colors.white,
+                            color: isDark ? Colors.white : AppTheme.textPrimary,
                             letterSpacing: 0.5,
-                            shadows: [
+                            shadows: const [
                               Shadow(
                                 offset: Offset(0, 2),
                                 blurRadius: 8,
@@ -138,17 +139,24 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             ],
                           ),
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Subtitle
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
+                            color: isDark
+                                ? AppTheme.darkCardColor.withOpacity(0.18)
+                                : Colors.black.withOpacity(0.04),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.2),
+                              color: isDark
+                                  ? AppTheme.darkCardColor.withOpacity(0.28)
+                                  : Colors.black.withOpacity(0.06),
                               width: 1,
                             ),
                           ),
@@ -156,7 +164,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             'Your gateway to the decentralized world',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.white.withOpacity(0.9),
+                              color: isDark
+                                  ? AppTheme.darkTextPrimary
+                                  : AppTheme.textSecondary,
                               fontWeight: FontWeight.w500,
                             ),
                             textAlign: TextAlign.center,
@@ -166,7 +176,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     ),
                   ),
                 ),
-                
+
                 Expanded(
                   flex: 3,
                   child: SlideTransition(
@@ -180,15 +190,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             child: Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.08),
+                                color: isDark
+                                    ? AppTheme.darkCardColor.withOpacity(0.12)
+                                    : Colors.black.withOpacity(0.02),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
-                                  color: Colors.white.withOpacity(0.15),
+                                  color: isDark
+                                      ? AppTheme.darkCardColor.withOpacity(0.18)
+                                      : Colors.black.withOpacity(0.04),
                                   width: 1,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
+                                    color: Colors.black.withOpacity(
+                                      isDark ? 0.08 : 0.04,
+                                    ),
                                     blurRadius: 20,
                                     offset: const Offset(0, 10),
                                   ),
@@ -198,18 +214,21 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   _buildFeatureItem(
+                                    isDark,
                                     Icons.security_outlined,
                                     'Secure & Private',
                                     'Your keys, your crypto',
                                   ),
                                   const SizedBox(height: 16),
                                   _buildFeatureItem(
+                                    isDark,
                                     Icons.flash_on_outlined,
                                     'Fast Transactions',
                                     'Quick and efficient transfers',
                                   ),
                                   const SizedBox(height: 16),
                                   _buildFeatureItem(
+                                    isDark,
                                     Icons.language_outlined,
                                     'Multi-Network',
                                     'Support for multiple blockchains',
@@ -218,30 +237,36 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                               ),
                             ),
                           ),
-                          
+
                           const SizedBox(height: 24),
-                          
+
                           // Action Buttons
                           Column(
                             children: [
                               // Create Wallet Button
                               CustomButton(
                                 text: 'Get Started',
-                                onPressed: () => _navigateToCreateWallet(context),
+                                onPressed: () =>
+                                    _navigateToCreateWallet(context),
                                 icon: Icons.rocket_launch_outlined,
-                                backgroundColor: const Color(0xFF6C63FF),
+                                backgroundColor: AppTheme.primaryColor,
                               ),
-                              
+
                               const SizedBox(height: 16),
-                              
+
                               // Import Wallet Button
                               CustomButton(
                                 text: 'Import Existing Wallet',
-                                onPressed: () => _navigateToImportWallet(context),
+                                onPressed: () =>
+                                    _navigateToImportWallet(context),
                                 icon: Icons.download_outlined,
                                 isOutlined: true,
-                                backgroundColor: Colors.white.withOpacity(0.3),
-                                textColor: Colors.white,
+                                backgroundColor: isDark
+                                    ? AppTheme.darkCardColor.withOpacity(0.14)
+                                    : Colors.black.withOpacity(0.04),
+                                textColor: isDark
+                                    ? AppTheme.darkTextPrimary
+                                    : AppTheme.textPrimary,
                               ),
                             ],
                           ),
@@ -258,35 +283,29 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     );
   }
 
-  Widget _buildFeatureItem(IconData icon, String title, String subtitle) {
+  Widget _buildFeatureItem(
+    bool isDark,
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
     return Row(
       children: [
         Container(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF6C63FF),
-                Color(0xFF5A52E8),
-              ],
-            ),
+            gradient: isDark ? AppTheme.darkBackgroundGradient : AppTheme.primaryGradient,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF6C63FF).withOpacity(0.3),
+                color: AppTheme.primaryColor.withOpacity(isDark ? 0.3 : 0.12),
                 blurRadius: 8,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 24,
-          ),
+          child: Icon(icon, color: Colors.white, size: 24),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -295,8 +314,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: isDark ? Colors.white : AppTheme.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -305,7 +324,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
+                  color: isDark
+                      ? Colors.white.withOpacity(0.7)
+                      : AppTheme.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
                 ),
@@ -325,13 +346,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             const CreateWalletScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1.0, 0.0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            )),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           );
         },
@@ -348,13 +372,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
             const CreateWalletScreen(), // Will show default create tab
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1.0, 0.0),
-              end: Offset.zero,
-            ).animate(CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            )),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  ),
+                ),
             child: child,
           );
         },

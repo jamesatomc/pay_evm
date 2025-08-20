@@ -226,14 +226,12 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _connectionTestResult 
-            // ignore: deprecated_member_use
-            ? Colors.green.withOpacity(0.1)
-            // ignore: deprecated_member_use
-            : Colors.red.withOpacity(0.1),
+        color: _connectionTestResult
+            ? AppTheme.successColor.withOpacity(0.1)
+            : AppTheme.errorColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: _connectionTestResult ? Colors.green : Colors.red,
+          color: _connectionTestResult ? AppTheme.successColor : AppTheme.errorColor,
           width: 1,
         ),
       ),
@@ -241,14 +239,14 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
         children: [
           Icon(
             _connectionTestResult ? Icons.check_circle : Icons.error,
-            color: _connectionTestResult ? Colors.green : Colors.red,
+            color: _connectionTestResult ? AppTheme.successColor : AppTheme.errorColor,
             size: 20,
           ),
           const SizedBox(width: 8),
           Text(
             _connectionTestResult ? 'Connection Successful' : 'Connection Failed',
             style: TextStyle(
-              color: _connectionTestResult ? Colors.green : Colors.red,
+              color: _connectionTestResult ? AppTheme.successColor : AppTheme.errorColor,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -275,7 +273,11 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              ),
+            )
           : Form(
               key: _formKey,
               child: ListView(
@@ -304,10 +306,14 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.link),
                       suffixIcon: _isTestingConnection
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    AppTheme.primaryColor),
+                              ),
                             )
                           : IconButton(
                               icon: const Icon(Icons.wifi_find),
@@ -395,14 +401,19 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                                     height: 24,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
-                                      return const Icon(Icons.error, size: 20, color: Colors.red);
+                                      return Icon(Icons.error,
+                                          size: 20, color: AppTheme.errorColor);
                                     },
                                     loadingBuilder: (context, child, loadingProgress) {
                                       if (loadingProgress == null) return child;
-                                      return const SizedBox(
+                                      return SizedBox(
                                         width: 20,
                                         height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                              AppTheme.primaryColor),
+                                        ),
                                       );
                                     },
                                   ),
@@ -429,7 +440,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                       onChanged: (value) => setState(() => _isTestnet = value),
                       secondary: Icon(
                         _isTestnet ? Icons.code : Icons.public,
-                        color: _isTestnet ? Colors.orange : Colors.green,
+                        color: _isTestnet ? AppTheme.primaryColor : AppTheme.successColor,
                       ),
                     ),
                   ),
@@ -450,34 +461,34 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                   // English
                   // Help Text
                   Card(
-                    color: Colors.blue.withOpacity(0.1),
-                    child: const Padding(
-                      padding: EdgeInsets.all(16),
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.info, color: Colors.blue),
-                              SizedBox(width: 8),
+                              Icon(Icons.info, color: AppTheme.primaryColor),
+                              const SizedBox(width: 8),
                               Text(
                                 'Required Information',
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
+                                  color: AppTheme.primaryColor,
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: 8),
-                          Text('• Network Name: The name to be displayed in the app'),
-                          Text('• RPC URL: URL for connecting to the network'),
-                          Text('• Chain ID: The network\'s unique identifier'),
-                          Text('• Currency Symbol: The symbol of the main currency'),
-                          Text('• Block Explorer: URL for viewing transaction details (optional)'),
-                          Text('• Icon URL: Link to the network\'s icon image (optional)'),
-                          SizedBox(height: 4),
-                          Text('  Supported formats: .png, .jpg, .svg, .webp',
+                          const SizedBox(height: 8),
+                          const Text('• Network Name: The name to be displayed in the app'),
+                          const Text('• RPC URL: URL for connecting to the network'),
+                          const Text('• Chain ID: The network\'s unique identifier'),
+                          const Text('• Currency Symbol: The symbol of the main currency'),
+                          const Text('• Block Explorer: URL for viewing transaction details (optional)'),
+                          const Text('• Icon URL: Link to the network\'s icon image (optional)'),
+                          const SizedBox(height: 4),
+                          const Text('  Supported formats: .png, .jpg, .svg, .webp',
                                style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
                         ],
                       ),

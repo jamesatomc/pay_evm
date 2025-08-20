@@ -216,25 +216,25 @@ class WalletScreenState extends State<WalletScreen> {
   }
 
   Color _getNetworkColor(NetworkModel network) {
-    if (network.isCustom) return Colors.blue;
+  if (network.isCustom) return AppTheme.primaryColor;
     if (network.isTestnet) return Colors.orange;
     
     switch (network.id) {
       case 'ethereum':
       case 'sepolia':
-        return const Color(0xFF627EEA);
+  return AppTheme.primaryColor;
       case 'bsc':
       case 'bsc-testnet':
         return const Color(0xFFF3BA2F);
       case 'polygon':
       case 'mumbai':
-        return const Color(0xFF8247E5);
+  return AppTheme.primaryColor;
       case 'avalanche':
       case 'fuji':
         return const Color(0xFFE84142);
       case 'fantom':
       case 'fantom-testnet':
-        return const Color(0xFF1969FF);
+  return AppTheme.primaryColor;
       case 'alpen-testnet':
         return const Color(0xFFF7931A); // Bitcoin orange
       default:
@@ -294,10 +294,13 @@ class WalletScreenState extends State<WalletScreen> {
             },
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
-              return const SizedBox(
+              return SizedBox(
                 width: 20,
                 height: 20,
-                child: CircularProgressIndicator(strokeWidth: 1, color: Colors.white),
+                child: CircularProgressIndicator(
+                  strokeWidth: 1,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
               );
             },
           ),
@@ -386,7 +389,9 @@ class WalletScreenState extends State<WalletScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              ),
             )
           : _currentWallet == null
               ? _buildNoWalletState()

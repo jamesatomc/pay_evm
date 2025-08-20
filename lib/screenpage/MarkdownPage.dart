@@ -51,8 +51,12 @@ class _MarkdownPageState extends State<MarkdownPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+    body: _isLoading
+      ? Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+          ),
+        )
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Markdown(
