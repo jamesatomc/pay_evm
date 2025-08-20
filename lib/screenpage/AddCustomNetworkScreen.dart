@@ -1,8 +1,8 @@
 // ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pay_evm/utils/app_theme.dart';
-import 'package:pay_evm/utils/custom_widgets.dart';
+import 'package:kanaripay/utils/app_theme.dart';
+import 'package:kanaripay/utils/custom_widgets.dart';
 import '../services/network_service.dart';
 import '../models/network_model.dart';
 

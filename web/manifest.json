@@ -1,6 +1,6 @@
 {
-    "name": "pay_evm",
-    "short_name": "pay_evm",
+    "name": "kanaripay",
+    "short_name": "kanaripay",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

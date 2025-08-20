@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "pay_evm" "\0"
+            VALUE "FileDescription", "kanaripay" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "pay_evm" "\0"
+            VALUE "InternalName", "kanaripay" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "pay_evm.exe" "\0"
-            VALUE "ProductName", "pay_evm" "\0"
+            VALUE "OriginalFilename", "kanaripay.exe" "\0"
+            VALUE "ProductName", "kanaripay" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

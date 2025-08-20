@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pay_evm/providers/theme_provider.dart';
-import 'package:pay_evm/utils/app_theme.dart';
+import 'package:kanaripay/providers/theme_provider.dart';
+import 'package:kanaripay/utils/app_theme.dart';
 
 void main() {
   runApp(const DarkModeDemo());

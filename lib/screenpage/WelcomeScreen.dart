@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pay_evm/utils/custom_widgets.dart';
+import 'package:kanaripay/utils/custom_widgets.dart';
 import 'CreateWalletScreen.dart';
 
 

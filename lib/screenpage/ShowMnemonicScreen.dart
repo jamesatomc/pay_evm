@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:pay_evm/utils/custom_widgets.dart';
+import 'package:kanaripay/utils/custom_widgets.dart';
 import '../models/wallet_model.dart';
 import '../utils/app_theme.dart';
 

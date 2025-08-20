@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:pay_evm/utils/custom_widgets.dart';
+import 'package:kanaripay/utils/custom_widgets.dart';
 import 'package:local_auth/local_auth.dart';
 import '../services/wallet_service.dart';
 import '../services/token_service.dart';

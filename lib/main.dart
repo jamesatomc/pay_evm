@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:pay_evm/screenpage/WelcomeScreen.dart';
-import 'package:pay_evm/screenpage/WalletScreen.dart';
-import 'package:pay_evm/screenpage/AppLockScreen.dart';
-import 'package:pay_evm/utils/app_theme.dart';
-import 'package:pay_evm/services/wallet_service.dart';
-import 'package:pay_evm/services/security_service.dart';
-import 'package:pay_evm/providers/theme_provider.dart';
+import 'package:kanaripay/screenpage/WelcomeScreen.dart';
+import 'package:kanaripay/screenpage/WalletScreen.dart';
+import 'package:kanaripay/screenpage/AppLockScreen.dart';
+import 'package:kanaripay/utils/app_theme.dart';
+import 'package:kanaripay/services/wallet_service.dart';
+import 'package:kanaripay/services/security_service.dart';
+import 'package:kanaripay/providers/theme_provider.dart';
 
 void main() {
   runApp(const MyApp());
