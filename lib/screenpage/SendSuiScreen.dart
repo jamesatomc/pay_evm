@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
 import '../sui/sui_wallet_service.dart';
 import '../services/transaction_service.dart';
+import '../services/token_service.dart';
+import '../models/token_model.dart';
 import '../models/wallet_model.dart';
 import '../models/network_model.dart';
 import '../utils/app_theme.dart';
@@ -26,6 +28,7 @@ class SendSuiScreen extends StatefulWidget {
 class _SendSuiScreenState extends State<SendSuiScreen> {
   final SuiWalletService _walletService = SuiWalletService();
   final TransactionService _transactionService = TransactionService();
+  final TokenService _tokenService = TokenService();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   // No gas controls in SUI UI as requested
@@ -33,6 +36,9 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
   bool _isLoading = false;
   NetworkModel? _currentNetwork;
   double _balance = 0.0;
+  List<CustomTokenModel> _tokens = [];
+  CustomTokenModel? _selectedToken;
+  double _selectedTokenBalance = 0.0;
 
   @override
   void initState() {
@@ -58,8 +64,60 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
       setState(() => _currentNetwork = network);
       final bal = await _walletService.getSuiBalance(widget.wallet.address);
       setState(() => _balance = bal);
+      // Load tokens for this network (SUI native + any detected tokens)
+      try {
+        List<CustomTokenModel> tokens;
+        if (network.id.toLowerCase().contains('sui')) {
+          tokens = await _tokenService.getTokenBalances(widget.wallet, network.id);
+        } else {
+          tokens = await _tokenService.getAllTokens(network.id);
+        }
+        // If the token loader returned nothing, ensure at least the native SUI token is present
+        if (tokens.isEmpty) {
+          final nativeFallback = CustomTokenModel.native(
+            name: network.name,
+            symbol: network.currencySymbol,
+            networkId: network.id,
+            balance: bal,
+            iconUrl: network.iconUrl,
+          );
+          tokens = [nativeFallback];
+        }
+
+        setState(() => _tokens = tokens);
+
+        // Prefer native token as default selection
+        final native = tokens.firstWhere((t) => t.isNative, orElse: () => tokens.first);
+        setState(() => _selectedToken = native);
+        await _updateSelectedTokenBalance();
+      } catch (e) {
+        print('Error loading tokens: $e');
+      }
     } catch (e) {
       print('Error loading Sui network/balance: $e');
+    }
+  }
+
+  Future<void> _updateSelectedTokenBalance() async {
+    if (_selectedToken == null || _currentNetwork == null) return;
+    try {
+      if (_selectedToken!.isNative) {
+        setState(() => _selectedTokenBalance = _balance);
+        return;
+      }
+
+      // If on Sui network we loaded token balances already via getTokenBalances,
+      // so use the value present in the model. Otherwise fall back to ERC-20 flow.
+      if (_currentNetwork!.id.toLowerCase().contains('sui')) {
+        setState(() => _selectedTokenBalance = _selectedToken!.balance);
+        return;
+      }
+
+      final bal = await _tokenService.getTokenBalance(_selectedToken!.contractAddress, widget.wallet.address, _currentNetwork!.id);
+      setState(() => _selectedTokenBalance = bal);
+    } catch (e) {
+      print('Error fetching selected token balance: $e');
+      setState(() => _selectedTokenBalance = 0.0);
     }
   }
 
@@ -123,7 +181,12 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
       return;
     }
 
-    if (amount > _balance) {
+    if (_selectedToken == null) {
+      _showError('No token selected');
+      return;
+    }
+
+    if (amount > _selectedTokenBalance) {
       _showError('Insufficient balance');
       return;
     }
@@ -133,12 +196,25 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
     setState(() => _isLoading = true);
 
     try {
-  final txHash = await _walletService.sendSui(
-        fromAddress: widget.wallet.address,
-        toAddress: _addressController.text.trim(),
-        amount: amount,
-        networkId: _currentNetwork?.id,
-      );
+      String txHash;
+      if (_selectedToken!.isNative) {
+        txHash = await _walletService.sendSui(
+          fromAddress: widget.wallet.address,
+          toAddress: _addressController.text.trim(),
+          amount: amount,
+          networkId: _currentNetwork?.id,
+        );
+      } else {
+        // For Sui Move tokens we expect contractAddress to be the Move type
+        txHash = await _walletService.sendSuiToken(
+          fromAddress: widget.wallet.address,
+          toAddress: _addressController.text.trim(),
+          amount: amount,
+          coinType: _selectedToken!.contractAddress,
+          decimals: _selectedToken!.decimals,
+          networkId: _currentNetwork?.id,
+        );
+      }
 
       // Save pending transaction locally
       final pendingTx = _transactionService.createPendingTransaction(
@@ -146,10 +222,10 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
         from: widget.wallet.address,
         to: _addressController.text.trim(),
         amount: amount,
-        symbol: 'SUI',
+        symbol: _selectedToken?.symbol ?? 'SUI',
         networkId: _currentNetwork?.id ?? 'sui',
-  gasPrice: 0.0,
-        tokenAddress: null,
+        gasPrice: 0.0,
+        tokenAddress: _selectedToken!.isNative ? null : _selectedToken!.contractAddress,
       );
 
       await _transactionService.saveLocalTransaction(pendingTx, widget.wallet.address);
@@ -166,9 +242,9 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
   }
 
   void _setMaxAmount() {
-    // Use full balance as max; reserve tiny amount for gas if desired
-    final max = (_balance).clamp(0.0, _balance);
-    _amountController.text = max.toStringAsFixed(6);
+  // Use selected token balance as max (native or token)
+  final max = (_selectedTokenBalance).clamp(0.0, _selectedTokenBalance);
+  _amountController.text = max.toStringAsFixed(6);
   }
 
   void _showError(String message) {
@@ -213,6 +289,23 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
 
             const SizedBox(height: 16),
 
+            // Token selector
+            if (_tokens.isNotEmpty) ...[
+              DropdownButtonFormField<CustomTokenModel>(
+                value: _selectedToken,
+                decoration: const InputDecoration(
+                  labelText: 'Token',
+                  border: OutlineInputBorder(),
+                ),
+                items: _tokens.map((t) => DropdownMenuItem(value: t, child: Text('${t.symbol} ${t.isNative ? '' : ''}'))).toList(),
+                onChanged: (t) async {
+                  setState(() => _selectedToken = t);
+                  await _updateSelectedTokenBalance();
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+
             TextField(
               controller: _addressController,
               decoration: const InputDecoration(
@@ -227,9 +320,9 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
             TextField(
               controller: _amountController,
               decoration: InputDecoration(
-                labelText: 'Amount (SUI)',
+                labelText: 'Amount (${_selectedToken?.symbol ?? 'SUI'})',
                 border: const OutlineInputBorder(),
-                helperText: 'Available: ${_balance.toStringAsFixed(6)} SUI',
+                helperText: 'Available: ${_selectedTokenBalance.toStringAsFixed(6)} ${_selectedToken?.symbol ?? 'SUI'}',
                 suffixIcon: TextButton(
                   onPressed: _setMaxAmount,
                   child: const Text('MAX'),
@@ -247,7 +340,9 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
             ElevatedButton.icon(
               onPressed: _isLoading ? null : _sendSui,
               icon: const Icon(Icons.send),
-              label: _isLoading ? const Text('Sending...') : const Text('Send SUI'),
+              label: _isLoading
+                  ? Text('Sending ${_selectedToken?.symbol ?? '...'}')
+                  : Text('Send ${_selectedToken?.symbol ?? 'SUI'}'),
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
             ),
           ],

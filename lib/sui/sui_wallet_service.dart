@@ -303,5 +303,150 @@ class SuiWalletService {
     }
   }
 
+  /// Send a Move coin/token on Sui (non-native tokens).
+  ///
+  /// - [coinType] should be the Move coin type string (for example
+  ///   '0x2::sui::SUI' or '0x...' for other tokens). The method will search
+  ///   the sender's coin objects for one matching this type and with enough
+  ///   balance to cover [amount].
+  /// - [decimals] is the token decimals (default 9 to match SUI). If you
+  ///   already know the token's decimals, pass it so amount is converted
+  ///   correctly to base units.
+  Future<String> sendSuiToken({
+    required String fromAddress,
+    required String toAddress,
+    required double amount,
+    required String coinType,
+    int decimals = 9,
+    String? networkId,
+  }) async {
+    // Ensure client initialized for the active network (or provided network)
+    if (networkId != null) {
+      final ns = NetworkService();
+      final n = await ns.getNetworkById(networkId) ?? await ns.getActiveNetwork();
+      await initializeForNetwork(n);
+    } else if (_currentNetwork == null) {
+      await getCurrentNetwork();
+    }
+
+    // Read private key from secure storage (stored by WalletService as 'pk_<address>')
+    final storage = const FlutterSecureStorage();
+    final privateKey = await storage.read(key: 'pk_$fromAddress');
+    if (privateKey == null || privateKey.isEmpty) {
+      throw Exception('Private key for $fromAddress not found in secure storage');
+    }
+
+    if (_suiClient == null) {
+      throw Exception('Sui client not initialized for network ${_currentNetwork?.id ?? networkId ?? 'unknown'}');
+    }
+
+    // Convert amount to base units for the token
+    final BigInt amountRaw;
+    try {
+      final factor = BigInt.from(10).pow(decimals);
+      amountRaw = BigInt.from((amount * 1).round()) * factor ~/ BigInt.from(1);
+      // The above preserves rounding via integer multiplication; more precise
+      // conversion could use Decimal package if needed.
+    } catch (e) {
+      throw Exception('Invalid amount or decimals');
+    }
+
+    try {
+
+      // 1) Fetch coin objects and collect matching coins until we have enough total
+      final allCoins = await getAllSuiCoins(fromAddress);
+
+      final List<Map<String, dynamic>> matching = [];
+      BigInt totalFound = BigInt.zero;
+
+      for (final c in allCoins) {
+        try {
+          String? type;
+          BigInt balance = BigInt.zero;
+          String? objectId;
+
+          if (c is Map) {
+            if (c['coinObject'] is Map) {
+              final co = c['coinObject'] as Map;
+              type = co['type']?.toString();
+              objectId = co['objectId']?.toString() ?? co['objectID']?.toString() ?? co['object_id']?.toString();
+              final balVal = co['balance'] ?? co['amount'] ?? co['value'];
+              if (balVal != null) balance = BigInt.tryParse(balVal.toString()) ?? BigInt.zero;
+            } else {
+              type = c['type']?.toString();
+              objectId = c['objectId']?.toString() ?? c['objectID']?.toString() ?? c['object_id']?.toString();
+              final balVal = c['balance'] ?? c['amount'] ?? c['value'];
+              if (balVal != null) balance = BigInt.tryParse(balVal.toString()) ?? BigInt.zero;
+            }
+          } else {
+            // try dynamic access
+            try {
+              type = (c as dynamic).coinType as String?;
+            } catch (_) {}
+            try {
+              objectId = (c as dynamic).objectId?.toString();
+            } catch (_) {}
+            try {
+              final balVal = (c as dynamic).balance;
+              if (balVal != null) balance = BigInt.tryParse(balVal.toString()) ?? BigInt.zero;
+            } catch (_) {}
+          }
+
+          if (type == null || objectId == null) continue;
+          if (!type.toLowerCase().contains(coinType.toLowerCase())) continue;
+
+          matching.add({'objectId': objectId, 'balance': balance});
+          totalFound += balance;
+          if (totalFound >= amountRaw) break;
+        } catch (_) {
+          // ignore malformed coin and continue
+        }
+      }
+
+      if (totalFound < amountRaw) {
+        throw Exception('No single coin object of type $coinType has sufficient balance; consolidate coins first');
+      }
+
+      // Build transaction that consumes matching coin objects (merging/splitting as needed)
+      final account = sui.SuiAccount.fromPrivateKey(privateKey, sui.SignatureScheme.Ed25519);
+      final tx = sui.Transaction();
+
+      BigInt remaining = amountRaw;
+      for (final m in matching) {
+        final objId = m['objectId'] as String;
+        final bal = m['balance'] as BigInt;
+        final coinRef = tx.object(objId);
+
+        if (bal <= remaining) {
+          // send the whole coin object
+          tx.transferObjects([coinRef], toAddress);
+          remaining = remaining - bal;
+        } else {
+          // split only the required amount from this coin and transfer that split
+          final split = tx.splitCoins(coinRef, [remaining]);
+          tx.transferObjects([split], toAddress);
+          remaining = BigInt.zero;
+          break;
+        }
+      }
+
+      final result = await (_suiClient as dynamic).signAndExecuteTransactionBlock(account, tx);
+
+      if (result == null) throw Exception('Empty response from Sui client');
+      try {
+        if (result is Map && result['digest'] != null) return result['digest'].toString();
+        final dyn = result as dynamic;
+        if (dyn.digest != null) return dyn.digest.toString();
+      } catch (_) {}
+
+      final asString = result.toString();
+      if (asString.isNotEmpty) return asString;
+
+      throw Exception('Unknown response when sending SUI token: $result');
+    } catch (e) {
+      throw Exception('Failed to send SUI token: $e');
+    }
+  }
+
   
 }
