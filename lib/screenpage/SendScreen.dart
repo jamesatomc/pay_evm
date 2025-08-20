@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:pay_evm/utils/custom_widgets.dart';
+import 'package:kanaripay/utils/custom_widgets.dart';
 import 'package:local_auth/local_auth.dart';
 import '../services/wallet_service.dart';
 import '../services/token_service.dart';
@@ -560,9 +560,13 @@ class _SendScreenState extends State<SendScreen> {
                                           children: [
                                             Text(
                                               token.symbol,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontWeight: FontWeight.w600,
                                                 fontSize: 15,
+                                                color: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge
+                                                    ?.color,
                                               ),
                                               overflow: TextOverflow.ellipsis,
                                             ),
@@ -598,9 +602,10 @@ class _SendScreenState extends State<SendScreen> {
                                           style: TextStyle(
                                             fontWeight: FontWeight.w500,
                                             fontSize: 13,
-                                            color: Theme.of(
-                                              context,
-                                            ).primaryColor,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.color,
                                           ),
                                         ),
                                       ),

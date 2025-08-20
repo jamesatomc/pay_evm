@@ -255,12 +255,12 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
             },
             loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
-              return const SizedBox(
+              return SizedBox(
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.white,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                 ),
               );
             },
@@ -277,13 +277,13 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
   }
 
   Color _getNetworkColor(NetworkModel network) {
-    if (network.isCustom) return Colors.blue;
+  if (network.isCustom) return AppTheme.primaryColor;
     if (network.isTestnet) return Colors.orange;
 
     switch (network.id) {
       case 'ethereum':
       case 'sepolia':
-        return const Color(0xFF627EEA);
+  return AppTheme.primaryColor;
       case 'bsc':
       case 'bsc-testnet':
         return const Color(0xFFF3BA2F);
@@ -325,8 +325,8 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+    body: _isLoading
+      ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor)))
           : RefreshIndicator(
               onRefresh: _loadNetworks,
               child: ListView(

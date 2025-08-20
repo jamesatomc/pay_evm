@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Color palette
-  static const Color primaryColor = Color(0xFF2563EB); // Modern blue
-  static const Color primaryVariant = Color(0xFF1D4ED8);
+  // Brand primary set to orange
+  static const Color primaryColor = Color(0xFFF97316); // Orange (tailwind orange-500)
+  static const Color primaryVariant = Color(0xFFEA580C); // Orange-600
   static const Color secondaryColor = Color(0xFF10B981); // Success green
   static const Color successColor = Color(0xFF10B981); // Success green (alias)
   static const Color errorColor = Color(0xFFEF4444);
@@ -55,6 +56,13 @@ class AppTheme {
   // Gradient colors
   static const LinearGradient primaryGradient = LinearGradient(
     colors: [primaryColor, primaryVariant],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // Background gradient for dark mode (neutral, non-orange)
+  static const LinearGradient darkBackgroundGradient = LinearGradient(
+    colors: [darkSurfaceColor, darkBackgroundColor],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

@@ -154,8 +154,10 @@ class _WalletListScreenState extends State<WalletListScreen> {
               onPressed: () {
                 Clipboard.setData(ClipboardData(text: value));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  //eng
-                  const SnackBar(content: Text('Copied')),
+                  SnackBar(
+                    content: const Text('Copied'),
+                    backgroundColor: AppTheme.primaryColor,
+                  ),
                 );
               },
             ),
@@ -176,13 +178,13 @@ class _WalletListScreenState extends State<WalletListScreen> {
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.errorColor),
     );
   }
 
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.green),
+      SnackBar(content: Text(message), backgroundColor: AppTheme.successColor),
     );
   }
 
@@ -200,10 +202,13 @@ class _WalletListScreenState extends State<WalletListScreen> {
         backgroundColor: Colors.transparent,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _wallets.isEmpty
-          ? _buildEmptyState()
-          : _buildWalletList(),
+          ? Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              ),
+            )
+          : (_wallets.isEmpty ? _buildEmptyState() : _buildWalletList()),
     );
   }
 
@@ -215,7 +220,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
           Icon(
             Icons.account_balance_wallet_outlined,
             size: 64,
-            color: Theme.of(context).iconTheme.color?.withOpacity(0.5),
+            color: AppTheme.primaryColor.withOpacity(0.9),
           ),
           const SizedBox(height: 16),
           Text(
@@ -250,7 +255,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
           child: ListTile(
             leading: CircleAvatar(
               backgroundColor: isActive
-                  ? Theme.of(context).primaryColor
+                  ? AppTheme.primaryColor
                   : Theme.of(context).disabledColor,
               child: Icon(
                 Icons.account_balance_wallet,
@@ -268,7 +273,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green,
+                      color: AppTheme.primaryColor,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const Text(

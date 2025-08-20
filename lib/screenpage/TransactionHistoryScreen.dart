@@ -210,8 +210,10 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   Widget _buildTransactionsList(bool isSmallScreen) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+        ),
       );
     }
 
@@ -480,7 +482,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       case TransactionType.contractInteraction:
         return Colors.purple;
       case TransactionType.approval:
-        return Colors.blue;
+  return AppTheme.primaryColor;
       case TransactionType.swap:
         return Colors.orange;
       case TransactionType.stake:

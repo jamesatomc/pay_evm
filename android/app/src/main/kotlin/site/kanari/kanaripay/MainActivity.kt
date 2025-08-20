@@ -1,4 +1,4 @@
-package com.example.pay_evm
+package site.kanari.kanaripay
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

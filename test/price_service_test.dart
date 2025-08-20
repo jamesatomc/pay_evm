@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pay_evm/services/price_service.dart';
+import 'package:kanaripay/services/price_service.dart';
 
 void main() async {
   group('PriceService Tests', () {

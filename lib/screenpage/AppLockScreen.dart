@@ -102,6 +102,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
                 color: AppTheme.primaryColor,
               ),
               const SizedBox(height: 16),

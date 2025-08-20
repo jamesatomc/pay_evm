@@ -31,11 +31,14 @@ class CustomButton extends StatelessWidget {
       button = OutlinedButton.icon(
         onPressed: isLoading ? null : onPressed,
         icon: isLoading
-            ? const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                         child: CircularProgressIndicator(
+                           strokeWidth: 2,
+                           valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                         ),
+                )
             : (icon != null ? Icon(icon) : const SizedBox.shrink()),
         label: Text(text),
         style: OutlinedButton.styleFrom(
@@ -51,13 +54,13 @@ class CustomButton extends StatelessWidget {
       button = ElevatedButton.icon(
         onPressed: isLoading ? null : onPressed,
         icon: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
+                       child: CircularProgressIndicator(
+                         strokeWidth: 2,
+                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                       ),
               )
             : (icon != null ? Icon(icon) : const SizedBox.shrink()),
         label: Text(text),
@@ -113,7 +116,9 @@ class BalanceCard extends StatelessWidget {
         return Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: AppTheme.primaryGradient,
+            gradient: Theme.of(context).brightness == Brightness.dark
+                ? AppTheme.darkBackgroundGradient
+                : AppTheme.primaryGradient,
             borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
             boxShadow: AppTheme.elevatedShadow,
           ),
