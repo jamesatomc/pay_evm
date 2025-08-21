@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import '../sui/sui_wallet_service.dart';
 import '../services/transaction_service.dart';
 import '../services/token_service.dart';
@@ -34,6 +35,7 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
   // No gas controls in SUI UI as requested
 
   bool _isLoading = false;
+  bool _showScanner = false;
   NetworkModel? _currentNetwork;
   double _balance = 0.0;
   List<CustomTokenModel> _tokens = [];
@@ -241,6 +243,23 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
     }
   }
 
+  void _scanQRCode() {
+    setState(() => _showScanner = true);
+  }
+
+  void _onQRCodeDetected(BarcodeCapture capture) {
+    final List<Barcode> barcodes = capture.barcodes;
+    if (barcodes.isNotEmpty) {
+      final String code = barcodes.first.rawValue ?? '';
+      if (code.isNotEmpty) {
+        setState(() {
+          _showScanner = false;
+          _addressController.text = code;
+        });
+      }
+    }
+  }
+
   void _setMaxAmount() {
   // Use selected token balance as max (native or token)
   final max = (_selectedTokenBalance).clamp(0.0, _selectedTokenBalance);
@@ -261,6 +280,10 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_showScanner) {
+      return _buildQRScanner();
+    }
+
     return Scaffold(
       backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
@@ -273,15 +296,34 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Balance card (shows selected token balance)
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.wallet.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.account_balance_wallet,
+                          color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          widget.wallet.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 8),
-                    Text('Balance: ${_balance.toStringAsFixed(6)} SUI'),
+                    Text(
+                      'Balance: ${_selectedTokenBalance.toStringAsFixed(6)} ${_selectedToken?.symbol ?? 'SUI'}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -289,34 +331,146 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
 
             const SizedBox(height: 16),
 
-            // Token selector
-            if (_tokens.isNotEmpty) ...[
-              DropdownButtonFormField<CustomTokenModel>(
-                value: _selectedToken,
-                decoration: const InputDecoration(
-                  labelText: 'Token',
-                  border: OutlineInputBorder(),
+            // Token selector card (styled like SendScreen)
+            if (_tokens.isNotEmpty)
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                items: _tokens.map((t) => DropdownMenuItem(value: t, child: Text('${t.symbol} ${t.isNative ? '' : ''}'))).toList(),
-                onChanged: (t) async {
-                  setState(() => _selectedToken = t);
-                  await _updateSelectedTokenBalance();
-                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.token,
+                            color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Select Token',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor.withOpacity(0.03),
+                          border: Border.all(color: Theme.of(context).dividerColor),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<CustomTokenModel>(
+                            value: _selectedToken,
+                            isExpanded: true,
+                            hint: const Text('Select a token'),
+                            onChanged: (CustomTokenModel? newToken) async {
+                              if (newToken != null) {
+                                setState(() => _selectedToken = newToken);
+                                await _updateSelectedTokenBalance();
+                              }
+                            },
+                            items: _tokens.map((token) {
+                              return DropdownMenuItem<CustomTokenModel>(
+                                value: token,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: token.isNative
+                                            ? Theme.of(context).primaryColor.withOpacity(0.15)
+                                            : Theme.of(context).cardColor.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(
+                                          color: Theme.of(context).primaryColor.withOpacity(0.18),
+                                          width: 1,
+                                        ),
+                                      ),
+                                    child: Center(
+                                        child: Text(
+                                          token.symbol.toUpperCase(),
+                                          style: TextStyle(
+                                            color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            token.name,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(fontSize: 14),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            token.symbol,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).primaryColor.withOpacity(0.06),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        token.balance.toStringAsFixed(6),
+                                        style: TextStyle(fontSize: 12, color: Theme.of(context).textTheme.bodyMedium?.color),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(height: 12),
-            ],
 
+            const SizedBox(height: 20),
+
+            // Destination address
             TextField(
               controller: _addressController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Destination Address',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.location_on),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.location_on),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.qr_code_scanner),
+                  onPressed: _scanQRCode,
+                ),
               ),
             ),
 
             const SizedBox(height: 16),
 
+            // Amount field with MAX
             TextField(
               controller: _amountController,
               decoration: InputDecoration(
@@ -333,9 +487,34 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
 
             const SizedBox(height: 16),
 
-            // Gas budget removed from SUI UI by request
+            // Warning
+            Card(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? AppTheme.warningColor.withOpacity(0.12)
+                  : AppTheme.warningColor.withOpacity(0.08),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning, color: AppTheme.warningColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Please check the address and amount carefully. Once sent, it cannot be undone.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? AppTheme.darkTextPrimary
+                              : AppTheme.lightTextPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
             ElevatedButton.icon(
               onPressed: _isLoading ? null : _sendSui,
@@ -348,6 +527,19 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQRScanner() {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan QR Code'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => setState(() => _showScanner = false),
+        ),
+      ),
+      body: MobileScanner(onDetect: _onQRCodeDetected),
     );
   }
 }

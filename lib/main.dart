@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:kanaripay/screenpage/WelcomeScreen.dart';
 import 'package:kanaripay/screenpage/WalletScreen.dart';
@@ -9,6 +10,9 @@ import 'package:kanaripay/services/security_service.dart';
 import 'package:kanaripay/providers/theme_provider.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Enter immersive fullscreen mode (hides status bar)
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const MyApp());
 }
 

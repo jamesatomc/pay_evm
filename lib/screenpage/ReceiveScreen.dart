@@ -90,7 +90,7 @@ class ReceiveScreen extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.account_balance_wallet,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
