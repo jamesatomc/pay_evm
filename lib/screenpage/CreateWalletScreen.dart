@@ -267,8 +267,8 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
             const Text('Create Wallet'),
           ],
         ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
+  elevation: 0,
+  backgroundColor: AppTheme.transparent,
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -280,9 +280,9 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 // Use theme-aware background so it looks correct in dark mode
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Theme.of(context).cardColor
-                    : Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+          ? Theme.of(context).cardColor
+          : AppTheme.cardColor,
                 borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
                 boxShadow: AppTheme.elevatedShadow,
               ),
@@ -302,9 +302,9 @@ class _CreateWalletScreenState extends State<CreateWalletScreen>
                   ],
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: Colors.transparent,
-                // Keep selected label visible (white text on colored indicator)
-                labelColor: Colors.white,
+                dividerColor: AppTheme.transparent,
+                // Keep selected label visible (use theme's onPrimary so it's correct in all modes)
+                labelColor: Theme.of(context).colorScheme.onPrimary,
                 // Use theme text color for unselected labels so they remain readable
                 unselectedLabelColor:
                     Theme.of(context).textTheme.bodySmall?.color ?? AppTheme.textSecondary,

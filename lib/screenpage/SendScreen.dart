@@ -407,7 +407,7 @@ class _SendScreenState extends State<SendScreen> {
           children: [const Text('Send Coin(ERC20)')],
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

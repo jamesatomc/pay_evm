@@ -30,7 +30,7 @@ class ReceiveScreen extends StatelessWidget {
           ],
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),

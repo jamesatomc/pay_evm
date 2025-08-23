@@ -288,7 +288,7 @@ class _SendSuiScreenState extends State<SendSuiScreen> {
       backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
         title: const Text('Send SUI'),
-        backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
         elevation: 0,
       ),
       body: SingleChildScrollView(

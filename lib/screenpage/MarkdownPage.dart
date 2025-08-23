@@ -48,7 +48,7 @@ class _MarkdownPageState extends State<MarkdownPage> {
       backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
         title: Text(widget.title),
-        backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
         elevation: 0,
       ),
     body: _isLoading

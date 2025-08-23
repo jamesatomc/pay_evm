@@ -12,6 +12,8 @@ class AppTheme {
   static const Color warningColor = Color(0xFFF59E0B);
   // Transparent alias to avoid direct Colors.transparent usage
   static const Color transparent = Color(0x00000000);
+  // Common white alias to avoid direct Colors.white usage in widgets
+  static const Color white = Color(0xFFFFFFFF);
 
   // Light Theme Colors
   static const Color lightSurfaceColor = Color(0xFFF6F7FB);

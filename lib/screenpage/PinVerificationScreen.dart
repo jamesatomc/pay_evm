@@ -150,7 +150,8 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
     for (var controller in _pinControllers) {
       controller.clear();
     }
-    // ไม่ต้อง focus เพราะเราใช้ numpad
+  // No focus needed because we use the numpad — ensure UI updates
+  if (mounted) setState(() {});
   }
 
   void _showLockDialog() {
@@ -209,7 +210,7 @@ class _PinVerificationScreenState extends State<PinVerificationScreen>
       backgroundColor: AppTheme.surfaceColor,
       appBar: widget.onCancel != null
           ? AppBar(
-              backgroundColor: Colors.transparent,
+          backgroundColor: AppTheme.transparent,
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.close),

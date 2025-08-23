@@ -237,32 +237,7 @@ class WalletScreenState extends State<WalletScreen> {
     }
   }
 
-  Color _getNetworkColor(NetworkModel network) {
-    if (network.isCustom) return AppTheme.primaryColor;
-    if (network.isTestnet) return Colors.orange;
 
-    switch (network.id) {
-      case 'ethereum':
-      case 'sepolia':
-        return AppTheme.primaryColor;
-      case 'bsc':
-      case 'bsc-testnet':
-        return const Color(0xFFF3BA2F);
-      case 'polygon':
-      case 'mumbai':
-        return AppTheme.primaryColor;
-      case 'avalanche':
-      case 'fuji':
-        return const Color(0xFFE84142);
-      case 'fantom':
-      case 'fantom-testnet':
-        return AppTheme.primaryColor;
-      case 'alpen-testnet':
-        return const Color(0xFFF7931A); // Bitcoin orange
-      default:
-        return AppTheme.primaryColor;
-    }
-  }
 
   IconData _getNetworkIcon(NetworkModel network) {
     if (network.isCustom) return Icons.lan;
@@ -302,7 +277,6 @@ class WalletScreenState extends State<WalletScreen> {
       return Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: _getNetworkColor(network),
           shape: BoxShape.circle,
         ),
         child: ClipOval(
@@ -341,7 +315,6 @@ class WalletScreenState extends State<WalletScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: _getNetworkColor(network),
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -470,9 +443,6 @@ class WalletScreenState extends State<WalletScreen> {
               networkName: _currentNetwork?.name,
               networkIcon: _currentNetwork != null
                   ? _getNetworkIcon(_currentNetwork!)
-                  : null,
-              networkColor: _currentNetwork != null
-                  ? _getNetworkColor(_currentNetwork!)
                   : null,
               onCopyAddress: _copyAddress,
               onNetworkTap: _openNetworkSelection,
@@ -635,7 +605,7 @@ class WalletScreenState extends State<WalletScreen> {
   void _showTokenDetails(CustomTokenModel token) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
       builder: (context) => Container(
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,

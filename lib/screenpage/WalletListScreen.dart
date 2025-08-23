@@ -199,7 +199,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
           children: [const Text('My Wallets')],
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
       ),
     body: _isLoading
       ? Center(child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary)))
