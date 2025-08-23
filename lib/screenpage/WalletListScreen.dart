@@ -191,7 +191,7 @@ class _WalletListScreenState extends State<WalletListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surfaceColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -201,13 +201,8 @@ class _WalletListScreenState extends State<WalletListScreen> {
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-              ),
-            )
+    body: _isLoading
+      ? Center(child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary)))
           : (_wallets.isEmpty ? _buildEmptyState() : _buildWalletList()),
     );
   }
@@ -250,18 +245,17 @@ class _WalletListScreenState extends State<WalletListScreen> {
         final wallet = _wallets[index];
         final isActive = _activeWallet?.address == wallet.address;
 
+        // Add a subtle border so cards are visible in dark mode
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.06)),
+          ),
           child: ListTile(
             leading: CircleAvatar(
-              backgroundColor: isActive
-                  ? AppTheme.primaryColor
-                  : Theme.of(context).disabledColor,
-              child: Icon(
-                Icons.account_balance_wallet,
-                color: Colors.white,
-                size: 20,
-              ),
+              backgroundColor: isActive ? AppTheme.primaryColor : Theme.of(context).disabledColor,
+              child: Icon(Icons.account_balance_wallet, color: Theme.of(context).colorScheme.onPrimary, size: 20),
             ),
             title: Row(
               children: [
@@ -272,14 +266,8 @@ class _WalletListScreenState extends State<WalletListScreen> {
                       horizontal: 8,
                       vertical: 2,
                     ),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'In Use',
-                      style: TextStyle(color: Colors.white, fontSize: 10),
-                    ),
+                    decoration: BoxDecoration(color: AppTheme.primaryColor, borderRadius: BorderRadius.circular(12)),
+                    child: Text('In Use', style: TextStyle(color: Theme.of(context).colorScheme.onPrimary, fontSize: 10)),
                   ),
               ],
             ),

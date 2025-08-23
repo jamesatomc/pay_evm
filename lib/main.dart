@@ -125,75 +125,41 @@ class _AppInitializerState extends State<AppInitializer>
 
   @override
   Widget build(BuildContext context) {
+    // Ensure AppTheme dynamic colors are in sync with the active Theme
+    AppTheme.updateThemeColors(Theme.of(context).brightness == Brightness.dark);
+
     if (_isLoading) {
       final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
       return Scaffold(
-        backgroundColor: AppTheme.surfaceColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App Logo with pulse animation
               TweenAnimationBuilder<double>(
                 duration: const Duration(milliseconds: 1500),
-                tween: Tween(begin: 0.8, end: 1.0),
+                tween: Tween(begin: 0.86, end: 1.0),
                 builder: (context, scale, child) {
                   return Transform.scale(
                     scale: scale,
                     child: Container(
-                      width: 120,
-                      height: 120,
+                      width: 110,
+                      height: 110,
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? AppTheme.primaryColor.withOpacity(0.15)
-                            : AppTheme.primaryColor.withOpacity(0.18),
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(
-                              isDark ? 0.2 : 0.08,
-                            ),
-                            blurRadius: 30,
-                            offset: const Offset(0, 15),
-                          ),
-                        ],
+                        color: isDark ? Theme.of(context).cardColor : Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: AppTheme.elevatedShadow,
                       ),
-                      child: Icon(
-                        Icons.account_balance_wallet,
-                        size: 60,
-                        color: isDark ? Colors.white : AppTheme.primaryColor,
-                      ),
+                      child: Icon(Icons.account_balance_wallet, size: 54, color: Theme.of(context).colorScheme.primary),
                     ),
                   );
                 },
               ),
-              const SizedBox(height: 32),
-              Text(
-                'Kanari Wallet',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: isDark
-                      ? Colors.white
-                      : Theme.of(context).textTheme.titleLarge?.color ??
-                            AppTheme.textPrimary,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 48),
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isDark
-                        ? AppTheme.primaryColor.withOpacity(0.95)
-                        : AppTheme.primaryColor,
-                  ),
-                ),
-              ),
+              const SizedBox(height: 20),
+              Text('Kanari Wallet', style: Theme.of(context).textTheme.headlineSmall),
+              const SizedBox(height: 36),
+              SizedBox(width: 44, height: 44, child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary))),
             ],
           ),
         ),

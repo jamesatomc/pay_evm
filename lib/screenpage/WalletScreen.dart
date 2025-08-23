@@ -44,7 +44,6 @@ class WalletScreenState extends State<WalletScreen> {
     _loadWallet();
   }
 
-
   @override
   void dispose() {
     _walletService.dispose();
@@ -53,18 +52,20 @@ class WalletScreenState extends State<WalletScreen> {
 
   Future<void> _loadWallet() async {
     setState(() => _isLoading = true);
-    
+
     try {
       print('=== Loading wallet data ===');
       final wallet = await _walletService.getActiveWallet();
       final network = await _walletService.getCurrentNetwork();
-      
+
       print('Current network: ${network.name} (${network.id})');
       print('Chain ID: ${network.chainId}');
       print('RPC URL: ${network.rpcUrl}');
-      
+
       if (wallet != null) {
-        print('Loading balance for wallet: ${wallet.address} on network: ${network.name}');
+        print(
+          'Loading balance for wallet: ${wallet.address} on network: ${network.name}',
+        );
         double balance = 0.0;
         if (network.id.toLowerCase().contains('sui')) {
           balance = await _walletService.getSuiBalance(wallet.address);
@@ -76,10 +77,10 @@ class WalletScreenState extends State<WalletScreen> {
           balance = await _walletService.getEthBalance(wallet.address);
           setState(() => _ethBalance = balance);
         }
-        
+
         // Load tokens for this wallet and network
         final tokens = await _tokenService.getTokenBalances(wallet, network.id);
-        
+
         print('Balance loaded: $balance ${network.currencySymbol}');
         print('Tokens loaded: ${tokens.length} tokens');
         setState(() {
@@ -89,14 +90,16 @@ class WalletScreenState extends State<WalletScreen> {
           _tokens = tokens;
           _tokens = tokens;
         });
-        
+
         // Calculate total balance with real-time prices
         try {
           final totalBalance = await _calculateTotalBalance();
           setState(() {
             _totalBalance = totalBalance;
           });
-          print('Total balance calculated: \$${_totalBalance.toStringAsFixed(2)}');
+          print(
+            'Total balance calculated: \$${_totalBalance.toStringAsFixed(2)}',
+          );
         } catch (e) {
           print('Error calculating total balance: $e');
           setState(() {
@@ -123,24 +126,26 @@ class WalletScreenState extends State<WalletScreen> {
   Future<double> _calculateTotalBalance() async {
     // Use current network's currency price (real-time prices)
     double nativeTokenPrice = await _getNativeTokenPrice();
-  // Use SUI balance for Sui networks, otherwise use ETH/EVM native balance
-  final isSui = _currentNetwork != null && _currentNetwork!.id.toLowerCase().contains('sui');
-  final nativeBalance = isSui ? _suiBalance : _ethBalance;
-  double total = nativeBalance * nativeTokenPrice;
-    
+    // Use SUI balance for Sui networks, otherwise use ETH/EVM native balance
+    final isSui =
+        _currentNetwork != null &&
+        _currentNetwork!.id.toLowerCase().contains('sui');
+    final nativeBalance = isSui ? _suiBalance : _ethBalance;
+    double total = nativeBalance * nativeTokenPrice;
+
     // Add custom token values
     for (final token in _tokens) {
       if (!token.isNative) {
         total += token.usdValue;
       }
     }
-    
+
     return total;
   }
 
   Future<double> _getNativeTokenPrice() async {
     if (_currentNetwork == null) return 0.0; // Return 0 if no network
-    
+
     try {
       final symbol = _currentNetwork!.currencySymbol;
       final price = await _priceService.getTokenPrice(symbol);
@@ -158,7 +163,7 @@ class WalletScreenState extends State<WalletScreen> {
       context,
       MaterialPageRoute(builder: (context) => const NetworkSelectionScreen()),
     );
-    
+
     if (result == true) {
       // Force refresh network connection and reload wallet data
       setState(() {
@@ -167,17 +172,17 @@ class WalletScreenState extends State<WalletScreen> {
         _ethBalance = 0.0;
         _tokens = [];
       });
-      
+
       try {
         // Get the new network and switch to it
         final newNetwork = await _walletService.getCurrentNetwork();
         print('Switched to network: ${newNetwork.name}');
-        
+
         // Update UI with new network info immediately
         setState(() {
           _currentNetwork = newNetwork;
         });
-        
+
         // Reload all wallet data with new network
         await _loadWallet();
       } catch (e) {
@@ -192,7 +197,7 @@ class WalletScreenState extends State<WalletScreen> {
       context,
       MaterialPageRoute(builder: (context) => const CreateWalletScreen()),
     );
-    
+
     if (result != null) {
       await _loadWallet();
     }
@@ -203,7 +208,7 @@ class WalletScreenState extends State<WalletScreen> {
       context,
       MaterialPageRoute(builder: (context) => const WalletListScreen()),
     );
-    
+
     if (result != null) {
       await _loadWallet();
     }
@@ -233,25 +238,25 @@ class WalletScreenState extends State<WalletScreen> {
   }
 
   Color _getNetworkColor(NetworkModel network) {
-  if (network.isCustom) return AppTheme.primaryColor;
+    if (network.isCustom) return AppTheme.primaryColor;
     if (network.isTestnet) return Colors.orange;
-    
+
     switch (network.id) {
       case 'ethereum':
       case 'sepolia':
-  return AppTheme.primaryColor;
+        return AppTheme.primaryColor;
       case 'bsc':
       case 'bsc-testnet':
         return const Color(0xFFF3BA2F);
       case 'polygon':
       case 'mumbai':
-  return AppTheme.primaryColor;
+        return AppTheme.primaryColor;
       case 'avalanche':
       case 'fuji':
         return const Color(0xFFE84142);
       case 'fantom':
       case 'fantom-testnet':
-  return AppTheme.primaryColor;
+        return AppTheme.primaryColor;
       case 'alpen-testnet':
         return const Color(0xFFF7931A); // Bitcoin orange
       default:
@@ -262,12 +267,13 @@ class WalletScreenState extends State<WalletScreen> {
   IconData _getNetworkIcon(NetworkModel network) {
     if (network.isCustom) return Icons.lan;
     if (network.isTestnet) return Icons.code;
-    
+
     switch (network.id) {
       case 'sui-devnet':
       case 'sui-testnet':
       case 'sui-mainnet':
-        return Icons.language; // placeholder for Sui - replace with custom icon if available
+        return Icons
+            .language; // placeholder for Sui - replace with custom icon if available
       case 'ethereum':
       case 'sepolia':
         return Icons.currency_bitcoin; // Use as Ethereum placeholder
@@ -309,7 +315,7 @@ class WalletScreenState extends State<WalletScreen> {
               // Fallback to default icon if URL fails
               return Icon(
                 _getNetworkIcon(network),
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                 size: 20,
               );
             },
@@ -320,7 +326,9 @@ class WalletScreenState extends State<WalletScreen> {
                 height: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 1,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.onPrimary,
+                  ),
                 ),
               );
             },
@@ -328,7 +336,7 @@ class WalletScreenState extends State<WalletScreen> {
         ),
       );
     }
-    
+
     // Default icon
     return Container(
       padding: const EdgeInsets.all(4),
@@ -338,7 +346,7 @@ class WalletScreenState extends State<WalletScreen> {
       ),
       child: Icon(
         _getNetworkIcon(network),
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.onPrimary,
         size: 20,
       ),
     );
@@ -347,10 +355,10 @@ class WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surfaceColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Kanari Wallet'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppTheme.transparent,
         elevation: 0,
         leading: _currentNetwork != null
             ? IconButton(
@@ -389,7 +397,10 @@ class WalletScreenState extends State<WalletScreen> {
                 value: 'create',
                 child: Row(
                   children: [
-                    Icon(Icons.add_circle_outline, color: AppTheme.primaryColor),
+                    Icon(
+                      Icons.add_circle_outline,
+                      color: AppTheme.primaryColor,
+                    ),
                     const SizedBox(width: 8),
                     const Text('Create Wallet'),
                   ],
@@ -398,32 +409,33 @@ class WalletScreenState extends State<WalletScreen> {
             ],
           ),
           IconButton(
-            icon: Icon(
-              Icons.settings_outlined,
-              color: AppTheme.textPrimary,
-            ),
+            icon: Icon(Icons.settings_outlined, color: AppTheme.textPrimary),
             onPressed: _openSettings,
             tooltip: 'Settings',
           ),
+
           const SizedBox(width: AppTheme.spacingS),
         ],
       ),
       body: _isLoading
-          ? const Center(
+          ? Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).colorScheme.primary,
+                ),
               ),
             )
           : _currentWallet == null
-              ? _buildNoWalletState()
-              : _buildWalletContent(),
+          ? _buildNoWalletState()
+          : _buildWalletContent(),
     );
   }
 
   Widget _buildNoWalletState() {
     return EmptyState(
       title: 'Welcome to Kanari Wallet',
-      subtitle: 'Create your first wallet to get started with secure crypto transactions',
+      subtitle:
+          'Create your first wallet to get started with secure crypto transactions',
       icon: Icons.account_balance_wallet_outlined,
       buttonText: 'Create New Wallet',
       onButtonPressed: _openCreateWallet,
@@ -442,33 +454,46 @@ class WalletScreenState extends State<WalletScreen> {
           children: [
             // Balance Card
             BalanceCard(
-                totalBalance: (_currentNetwork != null && _currentNetwork!.id.toLowerCase().contains('sui') ? _suiBalance : _totalBalance).toStringAsFixed(2),
-                currency: (_currentNetwork != null && _currentNetwork!.id.toLowerCase().contains('sui')) ? 'SUI' : 'USD',
+              totalBalance:
+                  (_currentNetwork != null &&
+                              _currentNetwork!.id.toLowerCase().contains('sui')
+                          ? _suiBalance
+                          : _totalBalance)
+                      .toStringAsFixed(2),
+              currency:
+                  (_currentNetwork != null &&
+                      _currentNetwork!.id.toLowerCase().contains('sui'))
+                  ? 'SUI'
+                  : 'USD',
               walletName: _currentWallet?.name,
               walletAddress: _currentWallet?.address,
               networkName: _currentNetwork?.name,
-              networkIcon: _currentNetwork != null ? _getNetworkIcon(_currentNetwork!) : null,
-              networkColor: _currentNetwork != null ? _getNetworkColor(_currentNetwork!) : null,
+              networkIcon: _currentNetwork != null
+                  ? _getNetworkIcon(_currentNetwork!)
+                  : null,
+              networkColor: _currentNetwork != null
+                  ? _getNetworkColor(_currentNetwork!)
+                  : null,
               onCopyAddress: _copyAddress,
               onNetworkTap: _openNetworkSelection,
             ),
-            
+
             const SizedBox(height: AppTheme.spacingL),
-            
+
             // Action Buttons
             _buildActionButtons(),
-            
+
             const SizedBox(height: AppTheme.spacingXL),
-            
+
             // Assets Section
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'My Assets',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppTheme.textPrimary,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(color: AppTheme.textPrimary),
                 ),
                 TextButton.icon(
                   onPressed: _openAddTokenScreen,
@@ -480,9 +505,9 @@ class WalletScreenState extends State<WalletScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: AppTheme.spacingM),
-            
+
             // Asset List
             _buildAssetList(),
           ],
@@ -498,7 +523,7 @@ class WalletScreenState extends State<WalletScreen> {
           label: 'Send',
           icon: Icons.arrow_upward_rounded,
           onPressed: _currentWallet != null ? _openSendScreen : null,
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).cardColor,
           iconColor: AppTheme.primaryColor,
         ),
         const SizedBox(width: AppTheme.spacingM),
@@ -506,7 +531,7 @@ class WalletScreenState extends State<WalletScreen> {
           label: 'Receive',
           icon: Icons.arrow_downward_rounded,
           onPressed: _currentWallet != null ? _openReceiveScreen : null,
-          backgroundColor: Colors.white,
+          backgroundColor: Theme.of(context).cardColor,
           iconColor: AppTheme.secondaryColor,
         ),
         const SizedBox(width: AppTheme.spacingM),
@@ -514,17 +539,9 @@ class WalletScreenState extends State<WalletScreen> {
           label: 'History',
           icon: Icons.history,
           onPressed: _currentWallet != null ? _openTransactionHistory : null,
-          backgroundColor: Colors.white,
-          iconColor: Colors.purple,
+          backgroundColor: Theme.of(context).cardColor,
+          iconColor: Theme.of(context).colorScheme.secondary,
         ),
-        // const SizedBox(width: AppTheme.spacingM),
-        // ActionButton(
-        //   label: 'Buy',
-        //   icon: Icons.add_circle_outline,
-        //   onPressed: null, // TODO: Implement buy functionality
-        //   backgroundColor: Colors.white,
-        //   iconColor: AppTheme.primaryColor,
-        // ),
       ],
     );
   }
@@ -532,7 +549,9 @@ class WalletScreenState extends State<WalletScreen> {
   void _openSendScreen() {
     if (_currentWallet != null) {
       // Choose SUI UI for Sui networks, otherwise use EVM send UI
-      final isSui = _currentNetwork != null && _currentNetwork!.id.toLowerCase().contains('sui');
+      final isSui =
+          _currentNetwork != null &&
+          _currentNetwork!.id.toLowerCase().contains('sui');
 
       Navigator.push(
         context,
@@ -561,7 +580,8 @@ class WalletScreenState extends State<WalletScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => TransactionHistoryScreen(wallet: _currentWallet!),
+          builder: (context) =>
+              TransactionHistoryScreen(wallet: _currentWallet!),
         ),
       );
     }
@@ -575,7 +595,7 @@ class WalletScreenState extends State<WalletScreen> {
           builder: (context) => AddTokenScreen(network: _currentNetwork!),
         ),
       );
-      
+
       if (result != null) {
         // Reload wallet to show the new token
         await _loadWallet();
@@ -600,8 +620,8 @@ class WalletScreenState extends State<WalletScreen> {
           amount: token.balance,
           usdValue: token.usdValue,
           iconUrl: token.iconUrl,
-          icon: token.isNative && _currentNetwork != null 
-              ? _getNetworkIcon(_currentNetwork!) 
+          icon: token.isNative && _currentNetwork != null
+              ? _getNetworkIcon(_currentNetwork!)
               : Icons.token,
           onTap: () {
             // TODO: Show token details
@@ -638,7 +658,7 @@ class WalletScreenState extends State<WalletScreen> {
               ),
             ),
             const SizedBox(height: AppTheme.spacingL),
-            
+
             // Token info
             Row(
               children: [
@@ -647,11 +667,15 @@ class WalletScreenState extends State<WalletScreen> {
                   height: 50,
                   decoration: BoxDecoration(
                     color: AppTheme.surfaceColor,
-                    borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                    borderRadius: BorderRadius.circular(
+                      AppTheme.borderRadiusSmall,
+                    ),
                   ),
                   child: token.iconUrl != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.borderRadiusSmall,
+                          ),
                           child: Image.network(
                             token.iconUrl!,
                             fit: BoxFit.cover,
@@ -660,9 +684,9 @@ class WalletScreenState extends State<WalletScreen> {
                           ),
                         )
                       : Icon(
-                          token.isNative && _currentNetwork != null 
-                              ? _getNetworkIcon(_currentNetwork!) 
-                              : Icons.token, 
+                          token.isNative && _currentNetwork != null
+                              ? _getNetworkIcon(_currentNetwork!)
+                              : Icons.token,
                           color: AppTheme.primaryColor,
                         ),
                 ),
@@ -686,16 +710,18 @@ class WalletScreenState extends State<WalletScreen> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: AppTheme.spacingL),
-            
+
             // Balance info
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(AppTheme.spacingL),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceColor,
-                borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
+                borderRadius: BorderRadius.circular(
+                  AppTheme.borderRadiusMedium,
+                ),
               ),
               child: Column(
                 children: [
@@ -713,9 +739,9 @@ class WalletScreenState extends State<WalletScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: AppTheme.spacingL),
-            
+
             // Actions
             if (!token.isNative) ...[
               Row(
@@ -749,7 +775,9 @@ class WalletScreenState extends State<WalletScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Remove Token'),
-        content: Text('Are you sure you want to remove ${token.symbol} from your wallet?'),
+        content: Text(
+          'Are you sure you want to remove ${token.symbol} from your wallet?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -766,10 +794,10 @@ class WalletScreenState extends State<WalletScreen> {
 
     if (confirmed == true) {
       final success = await _tokenService.removeCustomToken(
-        token.contractAddress, 
+        token.contractAddress,
         token.networkId,
       );
-      
+
       if (success) {
         await _loadWallet(); // Reload to update the list
         if (mounted) {

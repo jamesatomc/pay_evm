@@ -27,52 +27,37 @@ class CustomButton extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget button;
 
+    final theme = Theme.of(context);
+    final foreground = textColor ?? (isOutlined ? theme.colorScheme.primary : Colors.white);
+
     if (isOutlined) {
       button = OutlinedButton.icon(
         onPressed: isLoading ? null : onPressed,
         icon: isLoading
-              ? SizedBox(
-                  width: 16,
-                  height: 16,
-                         child: CircularProgressIndicator(
-                           strokeWidth: 2,
-                           valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-                         ),
-                )
-            : (icon != null ? Icon(icon) : const SizedBox.shrink()),
-        label: Text(text),
+            ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary)))
+            : (icon != null ? Icon(icon, color: foreground) : const SizedBox.shrink()),
+        label: Text(text, style: TextStyle(color: foreground)),
         style: OutlinedButton.styleFrom(
-          foregroundColor: textColor ?? AppTheme.primaryColor,
-          side: BorderSide(color: backgroundColor ?? AppTheme.primaryColor),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-          ),
+          foregroundColor: foreground,
+          side: BorderSide(color: (backgroundColor ?? theme.colorScheme.primary).withOpacity(0.14)),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium)),
         ),
       );
     } else {
       button = ElevatedButton.icon(
         onPressed: isLoading ? null : onPressed,
         icon: isLoading
-            ? SizedBox(
-                width: 16,
-                height: 16,
-                       child: CircularProgressIndicator(
-                         strokeWidth: 2,
-                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                       ),
-              )
-            : (icon != null ? Icon(icon) : const SizedBox.shrink()),
-        label: Text(text),
+            ? SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation<Color>(Colors.white)))
+            : (icon != null ? Icon(icon, color: foreground) : const SizedBox.shrink()),
+        label: Text(text, style: TextStyle(color: foreground)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppTheme.primaryColor,
-          foregroundColor: textColor ?? Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-          ),
-          elevation: onPressed != null ? 2 : 0,
-          shadowColor: AppTheme.primaryColor.withOpacity(0.3),
+          backgroundColor: backgroundColor ?? theme.colorScheme.primary,
+          foregroundColor: foreground,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium)),
+          elevation: onPressed != null ? 6 : 0,
+          shadowColor: theme.colorScheme.primary.withOpacity(0.14),
         ),
       );
     }
@@ -116,11 +101,10 @@ class BalanceCard extends StatelessWidget {
         return Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: Theme.of(context).brightness == Brightness.dark
-                ? AppTheme.darkBackgroundGradient
-                : AppTheme.primaryGradient,
+            color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(AppTheme.borderRadiusLarge),
             boxShadow: AppTheme.elevatedShadow,
+            border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.06)),
           ),
           child: Padding(
             padding: EdgeInsets.all(
@@ -133,14 +117,7 @@ class BalanceCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Total Balance',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    Text('Total Balance', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Theme.of(context).textTheme.bodySmall?.color)),
                     Flexible(
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -156,13 +133,11 @@ class BalanceCard extends StatelessWidget {
                                   vertical: AppTheme.spacingXS,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(
-                                    AppTheme.borderRadiusSmall,
-                                  ),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                  ),
+                                  color: Theme.of(context).brightness == Brightness.dark
+                                      ? Colors.white.withOpacity(0.06)
+                                      : Theme.of(context).cardColor.withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall),
+                                  border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.06)),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -178,11 +153,7 @@ class BalanceCard extends StatelessWidget {
                                     ),
                                     Text(
                                       networkName!,
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: isSmall ? 9 : 11,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                      style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: isSmall ? 9 : 11, fontWeight: FontWeight.w600),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
@@ -192,15 +163,7 @@ class BalanceCard extends StatelessWidget {
                             SizedBox(width: isSmall ? 4 : AppTheme.spacingS),
                           ],
                           if (walletName != null)
-                            Text(
-                              walletName!,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: isSmall ? 12 : 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            Text(walletName!, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
                         ],
                       ),
                     ),
@@ -211,22 +174,11 @@ class BalanceCard extends StatelessWidget {
                 ),
 
                 // Balance amount
-        FittedBox(
+                FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
-                  child: Text(
-          currency == 'USD' ? '\$$totalBalance' : '$totalBalance $currency',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: isSmall
-                          ? 24
-                          : isMedium
-                          ? 28
-                          : 36,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
+                  child: Text(currency == 'USD' ? '\$$totalBalance' : '$totalBalance $currency',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: isSmall ? 22 : (isMedium ? 28 : 34), fontWeight: FontWeight.w800, color: Theme.of(context).textTheme.bodyLarge?.color)),
                 ),
 
                 SizedBox(
@@ -244,23 +196,14 @@ class BalanceCard extends StatelessWidget {
                             : AppTheme.spacingM,
                         vertical: AppTheme.spacingS,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.borderRadiusSmall,
-                        ),
-                      ),
+                      decoration: BoxDecoration(color: Theme.of(context).brightness == Brightness.dark ? Colors.white.withOpacity(0.03) : Theme.of(context).cardColor.withOpacity(0.6), borderRadius: BorderRadius.circular(AppTheme.borderRadiusSmall)),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Flexible(
                             child: Text(
                               '${walletAddress!.substring(0, 6)}...${walletAddress!.substring(walletAddress!.length - 4)}',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontFamily: 'monospace',
-                                fontSize: isSmall ? 12 : 14,
-                              ),
+                              style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontFamily: 'monospace', fontSize: isSmall ? 12 : 14),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -387,32 +330,40 @@ class ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bool isDark = theme.brightness == Brightness.dark;
+    final Color bgColor = backgroundColor ?? theme.cardColor;
+    final Color effectiveIconColor = iconColor ?? theme.colorScheme.primary;
+    final Color textColor = iconColor ?? theme.colorScheme.onSurface;
+
     return Expanded(
       child: Container(
         height: 60,
         decoration: BoxDecoration(
-          color: backgroundColor ?? Theme.of(context).cardColor,
+          color: bgColor,
           borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-          boxShadow: AppTheme.cardShadow,
+          boxShadow: isDark
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : AppTheme.cardShadow,
+          border: Border.all(color: theme.dividerColor.withOpacity(isDark ? 0.14 : 0.06), width: 1),
         ),
         child: Material(
-          color: Colors.transparent,
+          color: AppTheme.transparent,
           child: InkWell(
             onTap: onPressed,
             borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, color: iconColor ?? AppTheme.primaryColor, size: 24),
+                Icon(icon, color: effectiveIconColor, size: 24),
                 const SizedBox(height: AppTheme.spacingXS),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: iconColor ?? AppTheme.primaryColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
+                Text(label, style: TextStyle(color: textColor, fontWeight: FontWeight.w700, fontSize: 13, letterSpacing: 0.2)),
               ],
             ),
           ),
