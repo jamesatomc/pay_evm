@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// This file defines the app's theme, including colors, gradients, and styles for light and dark modes.
 class AppTheme {
   // Color palette
   // Brand primary set to orange
