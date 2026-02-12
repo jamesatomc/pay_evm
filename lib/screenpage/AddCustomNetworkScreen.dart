@@ -393,7 +393,7 @@ class _AddCustomNetworkScreenState extends State<AddCustomNetworkScreen> {
                               padding: const EdgeInsets.all(8.0),
                               child: CircleAvatar(
                                 radius: 12,
-                                backgroundColor: Colors.transparent,
+                                backgroundColor: AppTheme.transparent,
                                 child: ClipOval(
                                   child: Image.network(
                                     _iconUrlController.text.trim(),

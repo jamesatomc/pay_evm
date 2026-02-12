@@ -125,7 +125,7 @@ class ShowMnemonicScreen extends StatelessWidget {
                             width: 24,
                             height: 24,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).primaryColor,
+                              color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
                               shape: BoxShape.circle,
                             ),
                             child: Center(

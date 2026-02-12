@@ -404,10 +404,10 @@ class _SendScreenState extends State<SendScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [const Text('Send Money')],
+          children: [const Text('Send Coin(ERC20)')],
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -425,7 +425,7 @@ class _SendScreenState extends State<SendScreen> {
                       children: [
                         Icon(
                           Icons.account_balance_wallet,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -464,7 +464,7 @@ class _SendScreenState extends State<SendScreen> {
                       children: [
                         Icon(
                           Icons.token,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
                           size: 22,
                         ),
                         const SizedBox(width: 8),

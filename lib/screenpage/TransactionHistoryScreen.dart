@@ -119,7 +119,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           backgroundColor: AppTheme.surfaceColor,
           appBar: AppBar(
             title: const Text('Transaction History'),
-            backgroundColor: Colors.transparent,
+            backgroundColor: AppTheme.transparent,
             elevation: 0,
             leading: IconButton(
               icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),

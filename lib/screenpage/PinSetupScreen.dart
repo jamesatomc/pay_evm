@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import '../utils/app_theme.dart';
 
 class PinSetupScreen extends StatefulWidget {
-  final Function(String) onPinSetup;
+  // Expect an async callback so callers can perform async setup (e.g. store PIN)
+  final Future<void> Function(String) onPinSetup;
 
   const PinSetupScreen({
     super.key,
@@ -119,9 +120,14 @@ class _PinSetupScreenState extends State<PinSetupScreen> with TickerProviderStat
     } else {
       if (pin == _firstPin) {
         setState(() => _isLoading = true);
-        
         try {
-          widget.onPinSetup(pin);
+          // Await caller's async setup so we can update loading state correctly.
+          await widget.onPinSetup(pin);
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+          }
         } catch (e) {
           if (mounted) {
             setState(() {

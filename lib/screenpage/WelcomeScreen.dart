@@ -58,8 +58,8 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-  final Decoration backgroundDecoration = isDark
-    ? const BoxDecoration(gradient: AppTheme.darkBackgroundGradient)
+    final Decoration backgroundDecoration = isDark
+        ? const BoxDecoration(gradient: AppTheme.darkBackgroundGradient)
         : BoxDecoration(
             color: AppTheme.lightBackgroundColor,
             gradient: LinearGradient(
@@ -95,7 +95,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
-                            gradient: isDark ? AppTheme.darkBackgroundGradient : null,
+                            gradient: isDark
+                                ? AppTheme.darkBackgroundGradient
+                                : null,
                             color: isDark
                                 ? null
                                 : AppTheme.primaryColor.withOpacity(0.12),
@@ -115,7 +117,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             Icons.account_balance_wallet_outlined,
                             size: 60,
                             color: isDark
-                                ? Colors.white
+                                ? AppTheme.white
                                 : AppTheme.primaryColor,
                           ),
                         ),
@@ -128,7 +130,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.w800,
-                            color: isDark ? Colors.white : AppTheme.textPrimary,
+                            color: isDark
+                                ? AppTheme.white
+                                : AppTheme.textPrimary,
                             letterSpacing: 0.5,
                             shadows: const [
                               Shadow(
@@ -192,17 +196,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                               decoration: BoxDecoration(
                                 color: isDark
                                     ? AppTheme.darkCardColor.withOpacity(0.12)
-                                    : Colors.black.withOpacity(0.02),
+                                    : AppTheme.textMuted.withOpacity(0.02),
                                 borderRadius: BorderRadius.circular(24),
                                 border: Border.all(
                                   color: isDark
                                       ? AppTheme.darkCardColor.withOpacity(0.18)
-                                      : Colors.black.withOpacity(0.04),
+                                      : AppTheme.textMuted.withOpacity(0.04),
                                   width: 1,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(
+                                    color: AppTheme.textMuted.withOpacity(
                                       isDark ? 0.08 : 0.04,
                                     ),
                                     blurRadius: 20,
@@ -295,7 +299,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            gradient: isDark ? AppTheme.darkBackgroundGradient : AppTheme.primaryGradient,
+            gradient: isDark
+                ? AppTheme.darkBackgroundGradient
+                : AppTheme.primaryGradient,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(

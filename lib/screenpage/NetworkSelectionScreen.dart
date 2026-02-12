@@ -97,7 +97,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
                 child: const Text('Delete'),
               ),
             ],
@@ -152,7 +152,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       elevation: isActive ? 4 : 1,
-      color: isActive ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+  color: isActive ? (Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor).withOpacity(0.1) : null,
       child: ListTile(
         leading: _buildNetworkAvatar(network),
         title: Text(
@@ -188,7 +188,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isActive) const Icon(Icons.check_circle, color: Colors.green),
+            if (isActive) const Icon(Icons.check_circle, color: AppTheme.successColor),
             if (showMenu)
               PopupMenuButton<String>(
                 onSelected: (value) {
@@ -327,7 +327,7 @@ class _NetworkSelectionScreenState extends State<NetworkSelectionScreen> {
           children: [const Text('Select Network')],
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
       ),
     body: _isLoading
       ? Center(child: CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor)))

@@ -30,7 +30,7 @@ class ReceiveScreen extends StatelessWidget {
           ],
         ),
         elevation: 0,
-        backgroundColor: Colors.transparent,
+  backgroundColor: AppTheme.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -90,7 +90,7 @@ class ReceiveScreen extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.account_balance_wallet,
-                          color: Theme.of(context).primaryColor,
+                          color: Theme.of(context).iconTheme.color ?? Theme.of(context).primaryColor,
                         ),
                         const SizedBox(width: 8),
                         Text(
